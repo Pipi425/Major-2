@@ -1,4 +1,5 @@
 import pygame
+from Character import Player
 
 pygame.init()
 
@@ -54,6 +55,7 @@ def menu():
                 if start_button.is_clicked(mouse_pos):
                     print("Start Game")
                     click.play()
+                    character()
 
                 if quit_button.is_clicked(mouse_pos):
                     pygame.quit()
@@ -79,5 +81,52 @@ def menu():
         pygame.display.update()
         clock.tick(60)
 
+def first_scene():
+    Screen = pygame.display.set_mode((1280, 720))
+    pygame.display.set_caption("Major 2")
 
+    Game_active = True
+    clock = pygame.time.Clock()
+
+    while Game_active:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+
+    Screen.blit(0, 0, 255)
+    pygame.display.update()
+    clock.tick(60)
+
+def character():
+    screen = pygame.display.set_mode((1280, 720))
+    clock = pygame.time.Clock()
+    player = Player()
+
+    walls = [
+        pygame.Rect(200, 150, 120, 180)
+    ]
+
+    game_active = True
+    while game_active:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game_active = False
+                pygame.quit()
+                exit()
+
+        keys = pygame.key.get_pressed()
+        player.move(keys, walls)
+
+        screen.fill((30, 30, 30))
+
+        for wall in walls:
+            pygame.draw.rect(screen, (200, 50, 50), wall)
+
+        player.draw(screen)
+
+        pygame.draw.rect(screen, (0, 255, 0), player.get_rect(), 1)
+
+        pygame.display.flip()
+        clock.tick(60)
 menu()
