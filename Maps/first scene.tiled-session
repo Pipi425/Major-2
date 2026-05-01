@@ -1,0 +1,37 @@
+{
+    "activeFile": "first scene.tmx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "": {
+            "scaleInDock": 1
+        },
+        "cave.tsx": {
+            "scaleInDock": 1
+        },
+        "first scene.tmx": {
+            "scale": 1.037,
+            "selectedLayer": 6,
+            "viewCenter": {
+                "x": 525.5544840887175,
+                "y": 463.83799421407906
+            }
+        },
+        "first scene.tmx#cave": {
+            "scaleInEditor": 1
+        },
+        "items.tsx": {
+            "scaleInDock": 1
+        }
+    },
+    "last.externalTilesetPath": "/Users/milanli/PyCharmMiscProject/ICS4U/Real Major 2/Maps",
+    "openFiles": [
+        "first scene.tmx"
+    ],
+    "project": "first scene.tiled-project",
+    "recentFiles": [
+        "first scene.tmx"
+    ]
+}
