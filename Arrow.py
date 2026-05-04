@@ -10,29 +10,24 @@ def load_arrow_images():
     }
 
     for i in range(0, 30):
-
         arrow_images["up"].append(
             pygame.transform.scale(
-                pygame.image.load(f"Arrows/a{i}_up.png").convert_alpha(), (70, 70)
+                pygame.image.load(f"a{i}_up.png").convert_alpha(), (70, 70)
             )
         )
         arrow_images["down"].append(
             pygame.transform.scale(
-                pygame.image.load(f"Arrows/a{i}_down.png").convert_alpha(), (70, 70)
+                pygame.image.load(f"a{i}_down.png").convert_alpha(), (70, 70)
             )
         )
-
-        tempsurface = pygame.Surface((48, 22))
-        tempimage = pygame.image.load(f"Arrows/a{i}_left.png").convert_alpha()
-        tempsurface.blit(tempimage, (0, 0), (26, 39, 48, 22))
         arrow_images["left"].append(
             pygame.transform.scale(
-                tempsurface.convert_alpha(), (70, 70)
+                pygame.image.load(f"a{i}_left.png").convert_alpha(), (70, 70)
             )
         )
         arrow_images["right"].append(
             pygame.transform.scale(
-                pygame.image.load(f"Arrows/a{i}_right.png").convert_alpha(), (70, 70)
+                pygame.image.load(f"a{i}_right.png").convert_alpha(), (70, 70)
             )
         )
 
@@ -45,10 +40,7 @@ class Arrow:
         self.images = arrow_images[direction]
         self.frame_index = 0
         self.image = self.images[self.frame_index]
-
-
         self.rect = self.image.get_rect(center = (x, y))
-
         self.speed = 6
         self.animation_speed = 0.3
 
@@ -90,5 +82,7 @@ class Arrow:
         )
 
     def draw(self, screen):
-        pygame.draw.rect(screen, (0, 255, 0), self.rect)
         screen.blit(self.image, self.rect)
+
+    def hit_enemy(self, enemy_rect):
+        return self.rect.colliderect(enemy_rect)

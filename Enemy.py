@@ -14,6 +14,9 @@ class Enemy:
         self.frame = 0
         self.count = 0
         self.speed = 1
+        self.hp = 5
+        self.alive = True
+        self.stop = 0
 
     def get_image(self):
         return self.images[self.frame]
@@ -23,7 +26,7 @@ class Enemy:
 
     def get_center(self):
         image = self.get_image()
-        rect = image.get_rect(topleft=(self.x, self.y))
+        rect = image.get_rect(topleft = (self.x, self.y))
         return rect.center
 
     def check_move(self, dx, dy, walls):
@@ -37,6 +40,9 @@ class Enemy:
         return True
 
     def move(self, player, walls):
+        if self.stop > 0:
+            self.stop -= 1
+            return
         moving = False
 
         player_x, player_y = player.get_center()
@@ -55,8 +61,13 @@ class Enemy:
         elif player_y < enemy_y:
             dy = -self.speed
 
-        if self.check_move(dx, dy, walls):
+
+        if self.check_move(dx, 0, walls):
             self.x += dx
+            moving = True
+
+
+        if self.check_move(0, dy, walls):
             self.y += dy
             moving = True
 
@@ -69,5 +80,13 @@ class Enemy:
                 if self.frame >= 6:
                     self.frame = 0
 
+    def hit(self):
+        self.hp -= 1
+        self.stop = 20
+
+        if self.hp <= 0:
+            self.alive = False
+
     def draw(self, screen):
-        screen.blit(self.get_image(), (self.x, self.y))
+        if self.alive:
+            screen.blit(self.get_image(), (self.x, self.y))
