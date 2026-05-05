@@ -1,4 +1,5 @@
 import pygame
+import math
 
 class Enemy:
     def __init__(self, x, y):
@@ -15,22 +16,35 @@ class Enemy:
             self.images_hit.append(img_hit)
 
         self.SoundEffects.append(pygame.mixer.Sound("SoundEffects/Fly_death.mp3"))
+        self.SoundEffects[0].set_volume(0.5)
 
-        for i in self.SoundEffects:
-            i.set_volume(0.5)
+        self.SoundEffects.append(pygame.mixer.Sound("SoundEffects/Fly_chase.mp3"))
+        self.SoundEffects[1].set_volume(0.2)
+
+        self.spawn_x = x
+        self.spawn_y = y
 
         self.x = x
         self.y = y
+
         self.frame = 0
         self.count = 0
         self.speed = 1
         self.hp = 5
         self.alive = True
-        self.stop = 0
 
         self.is_hit = False
         self.hit_timer = 0
         self.hit_flash_counter = 0
+
+        self.aggro = False
+        self.state = "idle"
+        self.lose_timer = 0
+
+        self.idle_count = 0
+        self.hit_stun_timer = 0
+
+        self.last_state = "idle"
 
     def get_image(self):
         normal = self.images[self.frame]
@@ -55,54 +69,104 @@ class Enemy:
 
     def check_move(self, dx, dy, walls):
         test_rect = self.get_rect().move(dx, dy)
-
         for wall in walls:
             if test_rect.colliderect(wall):
                 return False
-
         return True
+
+    def animate(self, speed):
+        self.count += 1
+        if self.count >= speed:
+            self.count = 0
+            self.frame += 1
+            if self.frame >= 6:
+                self.frame = 0
 
     def move(self, player, walls):
         if not self.alive:
             return
 
-        if self.stop > 0:
-            self.stop -= 1
+        if pygame.time.get_ticks() < self.hit_stun_timer:
+            self.animate(999)
             return
-
-        moving = False
 
         player_x, player_y = player.get_center()
         enemy_x, enemy_y = self.get_center()
 
-        dx = 0
-        dy = 0
+        dx = player_x - enemy_x
+        dy = player_y - enemy_y
+        dist_sq = dx * dx + dy * dy
 
-        if player_x > enemy_x:
-            dx = self.speed
-        elif player_x < enemy_x:
-            dx = -self.speed
+        DETECTION_RANGE = 300
+        LOSE_RANGE = 500
 
-        if player_y > enemy_y:
-            dy = self.speed
-        elif player_y < enemy_y:
-            dy = -self.speed
+        if self.state == "chase":
+            if dist_sq > LOSE_RANGE * LOSE_RANGE:
+                self.lose_timer = 120
+                self.state = "lost"
 
-        if self.check_move(dx, 0, walls):
-            self.x += dx
-            moving = True
+        if self.state == "idle":
+            if dist_sq <= DETECTION_RANGE * DETECTION_RANGE:
+                self.state = "chase"
 
-        if self.check_move(0, dy, walls):
-            self.y += dy
-            moving = True
 
-        if moving:
-            self.count += 1
-            if self.count >= 8:
-                self.count = 0
-                self.frame += 1
-                if self.frame >= 6:
-                    self.frame = 0
+        elif self.state == "lost":
+
+            self.lose_timer -= 1
+
+            self.animate(6)
+
+            if self.lose_timer <= 0:
+                self.state = "return"
+
+        elif self.state == "return":
+            dx = self.spawn_x - self.x
+            dy = self.spawn_y - self.y
+            dist = math.sqrt(dx * dx + dy * dy)
+
+            if dist < 5:
+                self.x = self.spawn_x
+                self.y = self.spawn_y
+                self.state = "idle"
+                self.aggro = False
+            else:
+                if dx > 0:
+                    self.x += self.speed
+                elif dx < 0:
+                    self.x -= self.speed
+
+                if dy > 0:
+                    self.y += self.speed
+                elif dy < 0:
+                    self.y -= self.speed
+
+        if self.state != self.last_state:
+            if self.state == "chase":
+                self.SoundEffects[1].play()
+            elif self.state == "lost":
+                self.SoundEffects[1].play()
+
+            self.last_state = self.state
+
+        if self.state == "chase":
+            self.aggro = True
+
+            mx = self.speed if player_x > enemy_x else -self.speed
+            my = self.speed if player_y > enemy_y else -self.speed
+
+            if self.check_move(mx, 0, walls):
+                self.x += mx
+
+            if self.check_move(0, my, walls):
+                self.y += my
+
+            self.animate(6)
+
+        elif self.state == "return":
+            self.animate(8)
+
+        elif self.state == "idle":
+            self.animate(6)
 
         if self.is_hit:
             self.hit_timer -= 1
@@ -117,10 +181,11 @@ class Enemy:
             return
 
         self.hp -= 1
-        self.stop = 5
 
         self.is_hit = True
         self.hit_timer = 20
+
+        self.hit_stun_timer = pygame.time.get_ticks() + 100
 
         if self.hp <= 0:
             self.alive = False

@@ -96,7 +96,6 @@ class Arrow:
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
-        pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 1)
 
     def hit_enemy(self, enemy_rect):
 
