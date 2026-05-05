@@ -75,6 +75,9 @@ class Player:
     def get_rect(self):
         return pygame.Rect(self.x + 10, self.y + 32, 25, 15)
 
+    def get_hurt_rect(self):
+        return pygame.Rect(self.x, self.y, 45, 45)
+
     def get_center(self):
         image = self.get_image()
         rect = image.get_rect(topleft=(self.x, self.y))

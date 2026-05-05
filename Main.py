@@ -238,7 +238,7 @@ def first_scene():
                 enemy.hit()
                 weapon.hit = True
 
-        if enemy.alive and enemy.get_rect().colliderect(player.get_rect()):
+        if enemy.alive and enemy.get_rect().colliderect(player.get_hurt_rect()):
             player.take_hit()
 
         Screen.blit(SF, (0, 0))
