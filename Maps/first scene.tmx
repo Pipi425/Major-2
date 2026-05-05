@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="40" height="23" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="53">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="40" height="23" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="57">
  <tileset firstgid="1" source="cave.tsx"/>
  <tileset firstgid="323" source="items.tsx"/>
  <layer id="1" name="Tile Layer 1" width="40" height="23">
@@ -198,5 +198,7 @@
   <object id="49" x="413.456" y="476.232" width="291.367" height="40.2632"/>
   <object id="50" x="704.583" y="505.909" width="34.4938" height="59.8963"/>
   <object id="51" x="892.984" y="507.329" width="133.414" height="3.20194"/>
+  <object id="55" x="1279.98" y="125.428" width="41.6055" height="296.745"/>
+  <object id="56" x="1279.86" y="347.32" width="58.2212" height="97.0354"/>
  </objectgroup>
 </map>
