@@ -2,13 +2,14 @@ from struct import iter_unpack
 from turtle import Screen
 
 import pygame
+import random
 from Character import Player
 import pytmx
 from Arrow import Arrow, load_arrow_images
 from MeleeWeapon import MeleeWeapon, load_melee_images
+from Enemy import Enemy
 
 pygame.init()
-
 
 class Button(pygame.sprite.Sprite):
     def __init__(self, image_path, Hover_path, pos, size = (266, 119)):
@@ -97,6 +98,7 @@ def menu():
 def first_scene():
     pygame.mixer.music.stop()
 
+    enemy = Enemy(1000, 200)
     click = pygame.mixer.Sound("Musics/Hover2.mp3")
     click.set_volume(0.2)
     sound = pygame.mixer.Sound("Musics/Hover.mp3")
@@ -105,13 +107,23 @@ def first_scene():
     CaveWater.set_volume(0.4)
     CaveWater.play()
     arrow1 = pygame.mixer.Sound("SoundEffects/Arrow1.mp3")
-    arrow1.set_volume(0.2)
+    arrow1.set_volume(0.05)
+    arrow_hit = pygame.mixer.Sound("SoundEffects/Arrow_hit.mp3")
+    arrow_hit.set_volume(0.05)
+
+    melee_sounds = []
+
+    for i in range(1, 4):
+        melee_sounds.append(f"SoundEffects/Melee{i}.mp3")
+
 
     pygame.mixer.music.load("Musics/Cave.mp3")
     pygame.mixer.music.play(loops=-1)
 
     pygame.display.set_caption("Major 2")
     Screen = pygame.display.set_mode((1280, 768))
+    Screen1 = pygame.surface.Surface((1280, 768))
+    Screen1.fill((255, 0, 0, 128))
 
     arrow_images = load_arrow_images()
     arrows = []
@@ -122,7 +134,7 @@ def first_scene():
     tiled_map = pytmx.load_pygame("Maps/first scene.tmx", pixelalpha=True)
     b1 = pygame.Surface((1280, 768)).convert_alpha()
 
-    MenuButton = Button("Graphics/MenuButton.png", "Graphics/Hovered_MenuButton.png", (20, 700), size = (164, 66))
+    MenuButton = Button("Graphics/MenuButton.png", "Graphics/Hovered_MenuButton.png", (20, 680), size = (164, 66))
     regular_buttons = pygame.sprite.Group()
     regular_buttons.add(MenuButton)
 
@@ -153,6 +165,7 @@ def first_scene():
     while Game_active:
         for event in pygame.event.get():
             mouse_pos = pygame.mouse.get_pos()
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
@@ -180,29 +193,42 @@ def first_scene():
                     arrows.append(Arrow(x, y, player.direction, arrow_images))
 
                 if event.key == pygame.K_q:
+                    random.choice(melee_sounds).play()
                     x, y = player.get_center()
                     melee_weapons.append(MeleeWeapon(x, y, player.direction, melee_images))
 
-
-        for wall in walls:
-            pygame.draw.rect(Screen, (0, 255, 0), wall)
-        pygame.draw.rect(Screen, (0, 255, 0), player.get_rect(), 1)
-
         keys = pygame.key.get_pressed()
         player.move(keys, walls)
+        enemy.move(player, walls)
 
         for arrow in arrows[:]:
-            alive = arrow.update(walls)
+            alive = arrow.update()
+
             if not alive or arrow.off_screen(1280, 768):
                 arrows.remove(arrow)
 
+            elif enemy.alive and arrow.hit_enemy(enemy.get_rect()):
+                enemy.hit()
+                arrows.remove(arrow)
+                arrow_hit.play()
+
         for weapon in melee_weapons[:]:
             alive = weapon.update()
+
             if not alive:
                 melee_weapons.remove(weapon)
 
+            elif enemy.alive and weapon.hit_enemy(enemy.get_rect()) and not weapon.hit:
+                enemy.hit()
+                weapon.hit = True
+
+        if enemy.alive and enemy.get_rect().colliderect(player.get_rect()):
+            player.take_hit()
+
         Screen.blit(SF, (0, 0))
+
         player.draw(Screen)
+        enemy.draw(Screen)
 
         regular_buttons.draw(Screen)
 

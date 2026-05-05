@@ -1,4 +1,5 @@
 import pygame
+import random
 
 
 def load_melee_images():
@@ -12,22 +13,22 @@ def load_melee_images():
     for i in range(0, 5):
         melee_images["up"].append(
             pygame.transform.scale(
-                pygame.image.load(f"m{i}_up.png").convert_alpha(), (90, 90)
+                pygame.image.load(f"MeleeWeapons/m{i}_up.png").convert_alpha(), (90, 90)
             )
         )
         melee_images["down"].append(
             pygame.transform.scale(
-                pygame.image.load(f"m{i}_down.png").convert_alpha(), (90, 90)
+                pygame.image.load(f"MeleeWeapons/m{i}_down.png").convert_alpha(), (90, 90)
             )
         )
         melee_images["left"].append(
             pygame.transform.scale(
-                pygame.image.load(f"m{i}_left.png").convert_alpha(), (90, 90)
+                pygame.image.load(f"MeleeWeapons/m{i}_left.png").convert_alpha(), (90, 90)
             )
         )
         melee_images["right"].append(
             pygame.transform.scale(
-                pygame.image.load(f"m{i}_right.png").convert_alpha(), (90, 90)
+                pygame.image.load(f"MeleeWeapons/m{i}_right.png").convert_alpha(), (90, 90)
             )
         )
 
@@ -43,8 +44,6 @@ class MeleeWeapon:
 
         self.animation_speed = 0.4
         self.hit = False
-
-
 
         if direction == "up":
             self.rect = self.image.get_rect(center=(x, y - 45))
@@ -65,6 +64,7 @@ class MeleeWeapon:
         return True
 
     def hit_enemy(self, enemy_rect):
+
         return self.rect.colliderect(enemy_rect)
 
     def draw(self, screen):
