@@ -43,7 +43,7 @@ class MeleeWeapon:
         self.image = self.images[self.frame_index]
 
         self.animation_speed = 0.4
-        self.hit = False
+        self.hit_enemies = set()
 
         if direction == "up":
             self.rect = self.image.get_rect(center=(x, y - 45))
@@ -63,9 +63,15 @@ class MeleeWeapon:
         self.image = self.images[int(self.frame_index)]
         return True
 
-    def hit_enemy(self, enemy_rect):
+    def hit_enemy(self, enemy):
+        if enemy in self.hit_enemies:
+            return False
 
-        return self.rect.colliderect(enemy_rect)
+        if self.rect.colliderect(enemy.get_rect()):
+            self.hit_enemies.add(enemy)
+            return True
+
+        return False
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)

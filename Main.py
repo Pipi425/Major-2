@@ -1,6 +1,3 @@
-from struct import iter_unpack
-from turtle import Screen
-
 import pygame
 import random
 from Character import Player
@@ -69,11 +66,11 @@ def menu():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if start_button.is_clicked(mouse_pos):
                     click.play()
-                    first_scene()
+                    return "first_scene"
 
                 if quit_button.is_clicked(mouse_pos):
-                    pygame.quit()
-                    exit()
+                    return "quit"
+
             if event.type == pygame.MOUSEMOTION:
                 for x in regular_buttons.sprites():
                     if x.rect.collidepoint(mouse_pos):
@@ -89,7 +86,6 @@ def menu():
 
         Screen1.blit(Background, (0, 0))
 
-        # draw all sprites
         regular_buttons.draw(Screen1)
 
         pygame.display.update()
@@ -104,11 +100,17 @@ def first_scene():
     last_arrow_time = 0
     last_melee_time = 0
 
-    enemy = Enemy(1000, 200)
+    enemies = [
+        Enemy(1000, 200),
+        Enemy(950, 300),
+        Enemy(1100, 250)
+    ]
     click = pygame.mixer.Sound("Musics/Hover2.mp3")
     click.set_volume(0.2)
     sound = pygame.mixer.Sound("Musics/Hover.mp3")
     sound.set_volume(0.2)
+    ChangeScene = pygame.mixer.Sound("SoundEffects/ChangeScene.mp3")
+    ChangeScene.set_volume(0.2)
     CaveWater = pygame.mixer.Sound("SoundEffects/CaveWater.mp3")
     CaveWater.set_volume(0.4)
     CaveWater.play()
@@ -119,6 +121,13 @@ def first_scene():
     melee_hit = pygame.mixer.Sound("SoundEffects/Melee_slash.mp3")
     melee_hit.set_volume(0.1)
     melee_sounds = []
+
+    fade_surface = pygame.Surface((1280, 768))
+    fade_surface.fill((255, 255, 255))
+    fade_alpha = 0
+    fading = False
+    fade_done = False
+    fade_timer = 0
 
     for i in range(1, 4):
         sound = pygame.mixer.Sound(f"SoundEffects/Melee{i}.mp3")
@@ -160,13 +169,14 @@ def first_scene():
 
     SF = draw_image_layers(b1)
 
-    player = Player()
+    player = Player(spawn_x = 297, spawn_y = 389)
     walls = []
     object_layer = tiled_map.get_layer_by_name("collision")
 
     for obj in object_layer:
         walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
 
+    scene_change_rect = pygame.Rect(1210, 40, 60, 60)
 
     Game_active = True
     clock = pygame.time.Clock()
@@ -182,7 +192,7 @@ def first_scene():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if MenuButton.is_clicked(mouse_pos):
                     click.play()
-                    menu()
+                    return "menu"
 
             if event.type == pygame.MOUSEMOTION:
                 for x in regular_buttons.sprites():
@@ -214,37 +224,344 @@ def first_scene():
 
         keys = pygame.key.get_pressed()
         player.move(keys, walls)
-        enemy.move(player, walls)
+        for enemy in enemies:
+            enemy.move(player, walls)
 
         for arrow in arrows[:]:
             alive = arrow.update()
 
             if not alive or arrow.off_screen(1280, 768):
                 arrows.remove(arrow)
+                continue
 
-            elif enemy.alive and arrow.hit_enemy(enemy.get_rect()):
-                enemy.hit()
-                arrows.remove(arrow)
-                arrow_hit.play()
+            for enemy in enemies:
+                if enemy.alive and arrow.hit_enemy(enemy.get_rect()):
+                    enemy.hit()
+                    arrows.remove(arrow)
+                    arrow_hit.play()
+                    break
 
         for weapon in melee_weapons[:]:
             alive = weapon.update()
 
             if not alive:
                 melee_weapons.remove(weapon)
+                continue
 
-            elif enemy.alive and weapon.hit_enemy(enemy.get_rect()) and not weapon.hit:
-                melee_hit.play()
-                enemy.hit()
-                weapon.hit = True
+            for enemy in enemies:
+                if enemy.alive and weapon.hit_enemy(enemy):
+                    melee_hit.play()
+                    enemy.hit()
 
-        if enemy.alive and enemy.get_rect().colliderect(player.get_hurt_rect()):
-            player.take_hit()
+        for enemy in enemies:
+            if enemy.alive and enemy.get_rect().colliderect(player.get_hurt_rect()):
+                player.take_hit()
 
         Screen.blit(SF, (0, 0))
 
         player.draw(Screen)
-        enemy.draw(Screen)
+        for enemy in enemies:
+            enemy.draw(Screen)
+        player.draw_health_bar(Screen)
+
+        regular_buttons.draw(Screen)
+
+        for arrow in arrows:
+            arrow.draw(Screen)
+
+        for weapon in melee_weapons:
+            weapon.draw(Screen)
+
+        if player.dead:
+            white = pygame.Surface(Screen.get_size())
+            white.fill((255, 255, 255))
+
+            old_screen = Screen.copy()
+
+            for alpha in range(0, 256, 2):
+                Screen.blit(old_screen, (0, 0))
+
+                white.set_alpha(alpha)
+                Screen.blit(white, (0, 0))
+
+                pygame.display.update()
+                clock.tick(60)
+
+            player = Player(spawn_x=297, spawn_y=389)
+            enemies = [
+                Enemy(1000, 200),
+                Enemy(950, 300),
+                Enemy(1100, 250)
+            ]
+            arrows.clear()
+            melee_weapons.clear()
+
+            continue
+
+        if fading and not fade_done:
+            fade_alpha += 10
+            if fade_alpha == 10:
+                ChangeScene.play()
+
+            if fade_alpha >= 255:
+                fade_alpha = 255
+                fade_done = True
+                fade_timer = pygame.time.get_ticks()
+
+        if fade_done:
+            if pygame.time.get_ticks() - fade_timer >= 2000:
+                return "second_scene"
+
+        if fading:
+            fade_surface.set_alpha(fade_alpha)
+            Screen.blit(fade_surface, (0, 0))
+
+        if player.get_rect().colliderect(scene_change_rect) and not fading:
+            pygame.mixer.music.fadeout(1000)
+            CaveWater.stop()
+            fading = True
+            fade_timer = pygame.time.get_ticks()
+
+        pygame.display.update()
+        clock.tick(60)
+
+def second_scene():
+    pygame.mixer.music.stop()
+
+    arrow_cooldown = 1500
+    melee_cooldown = 750
+
+    last_arrow_time = 0
+    last_melee_time = 0
+
+    enemies = []
+
+    click = pygame.mixer.Sound("Musics/Hover2.mp3")
+    click.set_volume(0.2)
+
+    sound = pygame.mixer.Sound("Musics/Hover.mp3")
+    sound.set_volume(0.2)
+
+    arrow1 = pygame.mixer.Sound("SoundEffects/Arrow1.mp3")
+    arrow1.set_volume(0.05)
+
+    arrow_hit = pygame.mixer.Sound("SoundEffects/Arrow_hit.mp3")
+    arrow_hit.set_volume(0.05)
+
+    melee_hit = pygame.mixer.Sound("SoundEffects/Melee_slash.mp3")
+    melee_hit.set_volume(0.1)
+
+    melee_sounds = []
+
+    for i in range(1, 4):
+        sound = pygame.mixer.Sound(f"SoundEffects/Melee{i}.mp3")
+        sound.set_volume(0.1)
+        melee_sounds.append(sound)
+
+    pygame.mixer.music.load("Musics/Main World.mp3")
+    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.play(loops=-1)
+
+    pygame.display.set_caption("Major 2")
+
+    Screen = pygame.display.set_mode((1280, 768))
+
+    Screen1 = pygame.surface.Surface((1280, 768))
+    Screen1.fill((255, 0, 0, 128))
+
+    arrow_images = load_arrow_images()
+    arrows = []
+
+    melee_images = load_melee_images()
+    melee_weapons = []
+
+    tiled_map = pytmx.load_pygame("Maps/untitled.tmx", pixelalpha=True)
+
+    SCALE = 2
+
+    b1 = pygame.Surface(
+        (
+            tiled_map.width * tiled_map.tilewidth * SCALE,
+            tiled_map.height * tiled_map.tileheight * SCALE
+        )
+    ).convert_alpha()
+
+    MenuButton = Button(
+        "Graphics/MenuButton.png",
+        "Graphics/Hovered_MenuButton.png",
+        (20, 680),
+        size=(164, 66)
+    )
+
+    regular_buttons = pygame.sprite.Group()
+    regular_buttons.add(MenuButton)
+
+    def draw_image_layers(n):
+
+        for layer in tiled_map.visible_layers:
+
+            if isinstance(layer, pytmx.TiledTileLayer):
+
+                for x, y, gid in layer:
+
+                    tile_image = tiled_map.get_tile_image_by_gid(gid)
+
+                    if tile_image:
+                        tile_image = pygame.transform.scale(
+                            tile_image,
+                            (
+                                tiled_map.tilewidth * SCALE,
+                                tiled_map.tileheight * SCALE
+                            )
+                        )
+
+                        pixel_x = x * tiled_map.tilewidth * SCALE
+                        pixel_y = y * tiled_map.tileheight * SCALE
+
+                        n.blit(tile_image, (pixel_x, pixel_y))
+
+        return n
+
+    SF = draw_image_layers(b1)
+
+    player = Player(spawn_x = 617, spawn_y = 720)
+
+    walls = []
+
+    object_layer = tiled_map.get_layer_by_name("collision")
+
+    for obj in object_layer:
+        walls.append(
+            pygame.Rect(
+                obj.x * SCALE,
+                obj.y * SCALE,
+                obj.width * SCALE,
+                obj.height * SCALE
+            )
+        )
+
+    Game_active = True
+
+    clock = pygame.time.Clock()
+
+    while Game_active:
+
+        for event in pygame.event.get():
+
+            mouse_pos = pygame.mouse.get_pos()
+
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if MenuButton.is_clicked(mouse_pos):
+                    click.play()
+                    return "menu"
+
+            if event.type == pygame.MOUSEMOTION:
+
+                for x in regular_buttons.sprites():
+
+                    if x.rect.collidepoint(mouse_pos):
+
+                        x.image = x.Image_list[1]
+
+                        if not x.hovered:
+                            sound.play()
+                            x.hovered = True
+
+                    else:
+                        x.image = x.Image_list[0]
+                        x.hovered = False
+
+            if event.type == pygame.KEYDOWN:
+
+                current_time = pygame.time.get_ticks()
+
+                if event.key == pygame.K_e:
+
+                    if current_time - last_arrow_time >= arrow_cooldown:
+
+                        arrow1.play()
+
+                        x, y = player.get_center()
+
+                        arrows.append(
+                            Arrow(x, y, player.direction, arrow_images)
+                        )
+
+                        last_arrow_time = current_time
+
+                if event.key == pygame.K_q:
+
+                    if current_time - last_melee_time >= melee_cooldown:
+
+                        random.choice(melee_sounds).play()
+
+                        x, y = player.get_center()
+
+                        melee_weapons.append(
+                            MeleeWeapon(x, y, player.direction, melee_images)
+                        )
+
+                        last_melee_time = current_time
+
+        keys = pygame.key.get_pressed()
+
+        player.move(keys, walls)
+
+        for enemy in enemies:
+            enemy.move(player, walls)
+
+        for arrow in arrows[:]:
+
+            alive = arrow.update()
+
+            if not alive or arrow.off_screen(1280, 768):
+                arrows.remove(arrow)
+                continue
+
+            for enemy in enemies:
+
+                if enemy.alive and arrow.hit_enemy(enemy.get_rect()):
+
+                    enemy.hit()
+
+                    arrows.remove(arrow)
+
+                    arrow_hit.play()
+
+                    break
+
+        for weapon in melee_weapons[:]:
+
+            alive = weapon.update()
+
+            if not alive:
+                melee_weapons.remove(weapon)
+                continue
+
+            for enemy in enemies:
+
+                if enemy.alive and weapon.hit_enemy(enemy):
+
+                    melee_hit.play()
+
+                    enemy.hit()
+
+        for enemy in enemies:
+
+            if enemy.alive and enemy.get_rect().colliderect(player.get_hurt_rect()):
+
+                player.take_hit()
+
+        Screen.blit(SF, (0, 0))
+
+        player.draw(Screen)
+
+        for enemy in enemies:
+            enemy.draw(Screen)
 
         regular_buttons.draw(Screen)
 
@@ -255,5 +572,23 @@ def first_scene():
             weapon.draw(Screen)
 
         pygame.display.update()
+
         clock.tick(60)
-menu()
+
+current_scene = "menu"
+
+while True:
+
+    if current_scene == "menu":
+        current_scene = menu()
+
+    elif current_scene == "first_scene":
+        current_scene = first_scene()
+
+    elif current_scene == "second_scene":
+        current_scene = second_scene()
+
+    elif current_scene == "quit":
+        break
+
+pygame.quit()

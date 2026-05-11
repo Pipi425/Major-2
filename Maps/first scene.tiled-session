@@ -8,30 +8,99 @@
         "": {
             "scaleInDock": 1
         },
-        "cave.tsx": {
+        "#Cliff_Tile": {
             "scaleInDock": 1
         },
+        "#Oak_Tree": {
+            "scaleInDock": 1
+        },
+        "#Path_Middle": {
+            "scaleInDock": 1
+        },
+        "#Path_Tile": {
+            "scaleInDock": 1
+        },
+        "Bridge_Wood.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "cave.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
         "first scene.tmx": {
-            "scale": 1.1144,
-            "selectedLayer": 6,
+            "scale": 0.6079,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 1218.1442928930364,
-                "y": 505.6532663316583
+                "x": 1106.267478203652,
+                "y": 398.91429511432796
             }
+        },
+        "first scene.tmx#Path_Tile": {
+            "scaleInDock": 1
         },
         "first scene.tmx#cave": {
             "scaleInEditor": 1
         },
         "items.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "untitled.tmx": {
+            "expandedObjectLayers": [
+                4
+            ],
+            "scale": 1.2458,
+            "selectedLayer": 3,
+            "viewCenter": {
+                "x": 386.4986354149944,
+                "y": 112.77893722908973
+            }
+        },
+        "untitled.tmx#Bridge_Wood": {
+            "scaleInDock": 1.9683
+        },
+        "untitled.tmx#Cliff_Tile": {
+            "scaleInDock": 1
+        },
+        "untitled.tmx#Fences": {
+            "scaleInDock": 1
+        },
+        "untitled.tmx#Oak_Tree": {
+            "scaleInDock": 1
+        },
+        "untitled.tmx#Oak_Tree_Small": {
+            "scaleInDock": 1
+        },
+        "untitled.tmx#Path_Tile": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "untitled.tmx#Water_Tile": {
             "scaleInDock": 1
         }
     },
     "last.externalTilesetPath": "/Users/milanli/PyCharmMiscProject/ICS4U/Real Major 2/Maps",
+    "last.imagePath": "/Users/milanli/Downloads/Cute_Fantasy_Free/Outdoor decoration",
+    "map.height": 24,
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 40,
     "openFiles": [
         "first scene.tmx"
     ],
     "project": "first scene.tiled-project",
     "recentFiles": [
+        "Bridge_Wood.tsx",
+        "cave.tsx",
+        "items.tsx",
         "first scene.tmx"
-    ]
+    ],
+    "tileset.embedInMap": false,
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
 }

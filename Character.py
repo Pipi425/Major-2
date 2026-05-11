@@ -2,7 +2,7 @@ import pygame
 import random
 
 class Player:
-    def __init__(self):
+    def __init__(self, spawn_x, spawn_y):
         self.up = []
         self.up_hit = []
         self.left = []
@@ -53,13 +53,27 @@ class Player:
             "right": self.right_hit
         }
 
-        self.x = 297
-        self.y = 389
+        self.x = spawn_x
+        self.y = spawn_y
         self.direction = "down"
         self.frame = 0
         self.count = 0
         self.speed = 2
         self.counter = 0
+
+        self.max_health = 6
+        self.health = 6
+        self.dead = False
+
+        self.Full_heart = pygame.transform.scale(
+            pygame.image.load("HealthBars/Full_heart.png").convert_alpha(), (40, 40)
+        )
+        self.Half_heart = pygame.transform.scale(
+            pygame.image.load("HealthBars/Half_heart.png").convert_alpha(), (40, 40)
+        )
+        self.Empty_heart = pygame.transform.scale(
+            pygame.image.load("HealthBars/Empty_heart.png").convert_alpha(), (40, 40)
+        )
 
     def get_image(self):
         normal = self.animations[self.direction][self.frame]
@@ -84,10 +98,15 @@ class Player:
         return rect.center
 
     def take_hit(self):
-        if not self.hit:
+        if not self.hit and not self.dead:
             random.choice(self.hurt_sound).play()
             self.hit = True
             self.hit_timer = 30
+
+            self.health -= 1
+            if self.health <= 0:
+                self.health = 0
+                self.dead = True
 
     def check_move(self, dx, dy, walls):
         test_rect = self.get_rect()
@@ -148,3 +167,18 @@ class Player:
 
     def draw(self, screen):
         screen.blit(self.get_image(), (self.x, self.y))
+
+    def draw_health_bar(self, screen):
+        heart_x = 20
+        heart_y = 20
+        spacing = 40
+
+        for i in range(3):
+            if self.health >= (i + 1) * 2:
+                image = self.Full_heart
+            elif self.health == i * 2 + 1:
+                image = self.Half_heart
+            else:
+                image = self.Empty_heart
+
+            screen.blit(image, (heart_x + i * spacing, heart_y))
