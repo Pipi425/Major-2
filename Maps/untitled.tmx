@@ -3,7 +3,7 @@
  <tileset firstgid="1" source="Oak_Tree.tsx"/>
  <tileset firstgid="21" source="Oak_Tree_Small.tsx"/>
  <tileset firstgid="39" name="Bridge_Wood" tilewidth="16" tileheight="16" tilecount="36" columns="9">
-  <image source="../../../../Downloads/Cute_Fantasy_Free/Outdoor decoration/Bridge_Wood.png" width="144" height="64"/>
+  <image source="Cute_Fantasy_Free/Outdoor decoration/Bridge_Wood.png" width="144" height="64"/>
  </tileset>
  <tileset firstgid="75" source="Cliff_Tile.tsx"/>
  <tileset firstgid="93" source="Path_Tile.tsx"/>

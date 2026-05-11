@@ -3,7 +3,7 @@
  <tileset firstgid="1" source="cave.tsx"/>
  <tileset firstgid="323" source="items.tsx"/>
  <tileset firstgid="519" name="Path_Tile" tilewidth="32" tileheight="32" tilecount="3" columns="1">
-  <image source="../../../../Downloads/Cute_Fantasy_Free/Tiles/Path_Tile.png" width="48" height="96"/>
+  <image source="Cute_Fantasy_Free/Tiles/Path_Tile.png" width="48" height="96"/>
  </tileset>
  <layer id="1" name="Tile Layer 1" width="40" height="23">
   <data encoding="csv">
