@@ -5,8 +5,13 @@ import pytmx
 from Arrow import Arrow, load_arrow_images
 from MeleeWeapon import MeleeWeapon, load_melee_images
 from Enemy import Enemy
+from Dialogue import DialogueSystem
+
 
 pygame.init()
+
+icon = pygame.image.load("Graphics/icon.png")
+pygame.display.set_icon(icon)
 
 class Button(pygame.sprite.Sprite):
     def __init__(self, image_path, Hover_path, pos, size = (266, 119)):
@@ -375,6 +380,8 @@ def second_scene():
     melee_images = load_melee_images()
     melee_weapons = []
 
+    dialogue = DialogueSystem()
+
     tiled_map = pytmx.load_pygame("Maps/untitled.tmx", pixelalpha=True)
 
     SCALE = 2
@@ -507,6 +514,17 @@ def second_scene():
 
                         last_melee_time = current_time
 
+                if event.key == pygame.K_f:
+
+                    if not dialogue.active:
+                        dialogue.start([
+                            "Who dares enter my cave...",
+                            "You are not welcome here.",
+                            "Leave now... or perish."
+                        ])
+                    else:
+                        dialogue.next_line()
+
         keys = pygame.key.get_pressed()
 
         player.move(keys, walls)
@@ -558,10 +576,11 @@ def second_scene():
 
         Screen.blit(SF, (0, 0))
 
+        dialogue.update()
+
         player.draw(Screen)
 
-        for enemy in enemies:
-            enemy.draw(Screen)
+        player.draw_health_bar(Screen)
 
         regular_buttons.draw(Screen)
 
@@ -570,6 +589,8 @@ def second_scene():
 
         for weapon in melee_weapons:
             weapon.draw(Screen)
+
+        dialogue.draw(Screen)
 
         pygame.display.update()
 
