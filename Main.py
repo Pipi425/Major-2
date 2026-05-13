@@ -6,35 +6,22 @@ from Arrow import Arrow, load_arrow_images
 from MeleeWeapon import MeleeWeapon, load_melee_images
 from Enemy import Enemy
 from Dialogue import DialogueSystem
-
+from NPCs import NPC
+from Buttons import Button
 
 pygame.init()
+
+Screen1 = pygame.display.set_mode((1280, 768))
+pygame.display.set_caption("Major 2")
 
 icon = pygame.image.load("Graphics/icon.png")
 pygame.display.set_icon(icon)
 
-class Button(pygame.sprite.Sprite):
-    def __init__(self, image_path, Hover_path, pos, size = (266, 119)):
-        super().__init__()
-
-        self.Regular_image = pygame.transform.scale(pygame.image.load(image_path).convert_alpha(),size)
-        self.Hover_path = pygame.transform.scale(pygame.image.load(Hover_path).convert_alpha(),size)
-
-        self.Image_list = [self.Regular_image, self.Hover_path]
-
-        self.image = self.Image_list[0]
-
-        self.rect = self.image.get_rect(topleft=pos)
-
-        self.hovered = False
-
-    def is_clicked(self, mouse_pos):
-        return self.rect.collidepoint(mouse_pos)
+f_icon = pygame.image.load("Graphics/F.png").convert_alpha()
+f_icon = pygame.transform.scale(f_icon, (30, 30))
 
 def menu():
     pygame.mixer.music.stop()
-    Screen1 = pygame.display.set_mode((1280, 768))
-    pygame.display.set_caption("Major 2")
 
     pygame.mixer.music.load("Musics/Menu.mp3")
     pygame.mixer.music.play(loops=-1)
@@ -96,7 +83,7 @@ def menu():
         pygame.display.update()
         clock.tick(60)
 
-def first_scene():
+def first_scene(player):
     pygame.mixer.music.stop()
 
     arrow_cooldown = 1500
@@ -174,7 +161,6 @@ def first_scene():
 
     SF = draw_image_layers(b1)
 
-    player = Player(spawn_x = 297, spawn_y = 389)
     walls = []
     object_layer = tiled_map.get_layer_by_name("collision")
 
@@ -228,39 +214,53 @@ def first_scene():
                         last_melee_time = current_time
 
         keys = pygame.key.get_pressed()
-        player.move(keys, walls)
-        for enemy in enemies:
-            enemy.move(player, walls)
 
-        for arrow in arrows[:]:
-            alive = arrow.update()
-
-            if not alive or arrow.off_screen(1280, 768):
-                arrows.remove(arrow)
-                continue
+        if not fading:
+            player.move(keys, walls)
 
             for enemy in enemies:
-                if enemy.alive and arrow.hit_enemy(enemy.get_rect()):
-                    enemy.hit()
+                enemy.move(player, walls)
+
+        if not fading:
+            for arrow in arrows[:]:
+
+                alive = arrow.update()
+
+                if not alive or arrow.off_screen(1280, 768):
                     arrows.remove(arrow)
-                    arrow_hit.play()
-                    break
+                    continue
 
-        for weapon in melee_weapons[:]:
-            alive = weapon.update()
+                for enemy in enemies:
 
-            if not alive:
-                melee_weapons.remove(weapon)
-                continue
+                    if enemy.alive and arrow.hit_enemy(enemy.get_rect()):
+                        enemy.hit()
 
+                        arrows.remove(arrow)
+
+                        arrow_hit.play()
+
+                        break
+
+        if not fading:
+            for weapon in melee_weapons[:]:
+
+                alive = weapon.update()
+
+                if not alive:
+                    melee_weapons.remove(weapon)
+                    continue
+
+                for enemy in enemies:
+
+                    if enemy.alive and weapon.hit_enemy(enemy):
+                        melee_hit.play()
+
+                        enemy.hit()
+
+        if not fading:
             for enemy in enemies:
-                if enemy.alive and weapon.hit_enemy(enemy):
-                    melee_hit.play()
-                    enemy.hit()
-
-        for enemy in enemies:
-            if enemy.alive and enemy.get_rect().colliderect(player.get_hurt_rect()):
-                player.take_hit()
+                if enemy.alive and enemy.get_rect().colliderect(player.get_hurt_rect()):
+                    player.take_hit()
 
         Screen.blit(SF, (0, 0))
 
@@ -315,6 +315,7 @@ def first_scene():
 
         if fade_done:
             if pygame.time.get_ticks() - fade_timer >= 2000:
+                player.set_position(617, 720)
                 return "second_scene"
 
         if fading:
@@ -330,7 +331,7 @@ def first_scene():
         pygame.display.update()
         clock.tick(60)
 
-def second_scene():
+def second_scene(player):
     pygame.mixer.music.stop()
 
     arrow_cooldown = 1500
@@ -431,9 +432,11 @@ def second_scene():
 
     SF = draw_image_layers(b1)
 
-    player = Player(spawn_x = 617, spawn_y = 720)
+    npc = NPC(720, 450)
 
     walls = []
+
+    walls.append(npc.get_rect())
 
     object_layer = tiled_map.get_layer_by_name("collision")
 
@@ -516,18 +519,25 @@ def second_scene():
 
                 if event.key == pygame.K_f:
 
-                    if not dialogue.active:
-                        dialogue.start([
-                            "Who dares enter my cave...",
-                            "You are not welcome here.",
-                            "Leave now... or perish."
-                        ])
-                    else:
+                    if dialogue.active:
                         dialogue.next_line()
+
+                    elif player.get_rect().inflate(40, 40).colliderect(npc.get_rect()):
+                        npc.sound[0].play()
+                        dialogue.start([
+                            "You came out of that cave…?!",
+                            "That place is extremely dangerous.",
+                            "You shouldn’t go back there again.",
+                            "You look exhausted…",
+                            "Eldermoor City is just ahead.",
+                            "You can rest there for a while."
+                        ])
 
         keys = pygame.key.get_pressed()
 
         player.move(keys, walls)
+
+        near_npc = player.get_rect().inflate(40, 40).colliderect(npc.get_rect())
 
         for enemy in enemies:
             enemy.move(player, walls)
@@ -578,6 +588,12 @@ def second_scene():
 
         dialogue.update()
 
+        npc.draw(Screen)
+
+        if near_npc:
+            offset_y = -30 + int(3 * pygame.time.get_ticks() / 300 % 2)
+            Screen.blit(f_icon, (npc.x + 8, npc.y + offset_y))
+
         player.draw(Screen)
 
         player.draw_health_bar(Screen)
@@ -596,6 +612,8 @@ def second_scene():
 
         clock.tick(60)
 
+player = Player(spawn_x=297, spawn_y=389)
+
 current_scene = "menu"
 
 while True:
@@ -604,12 +622,13 @@ while True:
         current_scene = menu()
 
     elif current_scene == "first_scene":
-        current_scene = first_scene()
+        current_scene = first_scene(player)
 
     elif current_scene == "second_scene":
-        current_scene = second_scene()
+        current_scene = second_scene(player)
 
     elif current_scene == "quit":
         break
 
 pygame.quit()
+
