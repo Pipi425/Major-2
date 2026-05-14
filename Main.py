@@ -8,6 +8,7 @@ from Enemy import Enemy
 from Dialogue import DialogueSystem
 from NPCs import NPC
 from Buttons import Button
+from Inventory import Inventory, InventoryUI, Item
 
 pygame.init()
 
@@ -97,6 +98,13 @@ def first_scene(player):
         Enemy(950, 300),
         Enemy(1100, 250)
     ]
+
+    inventory = Inventory(cols=6, rows=3)
+    inventory_ui = InventoryUI(inventory, player)
+
+    inventory.add_item(Item("Sword", "Items/Item71.png"))
+    inventory.add_item(Item("Potion", "Items/Item70.png"))
+
     click = pygame.mixer.Sound("Musics/Hover2.mp3")
     click.set_volume(0.2)
     sound = pygame.mixer.Sound("Musics/Hover.mp3")
@@ -213,6 +221,22 @@ def first_scene(player):
                         melee_weapons.append(MeleeWeapon(x, y, player.direction, melee_images))
                         last_melee_time = current_time
 
+                if event.key == pygame.K_i:
+                    inventory_ui.open = not inventory_ui.open
+
+                if inventory_ui.open:
+                    if event.key == pygame.K_LEFT:
+                        inventory_ui.move_cursor(-1, 0)
+
+                    if event.key == pygame.K_RIGHT:
+                        inventory_ui.move_cursor(1, 0)
+
+                    if event.key == pygame.K_UP:
+                        inventory_ui.move_cursor(0, -1)
+
+                    if event.key == pygame.K_DOWN:
+                        inventory_ui.move_cursor(0, 1)
+
         keys = pygame.key.get_pressed()
 
         if not fading:
@@ -327,6 +351,9 @@ def first_scene(player):
             CaveWater.stop()
             fading = True
             fade_timer = pygame.time.get_ticks()
+
+        if inventory_ui.open:
+            inventory_ui.draw(Screen)
 
         pygame.display.update()
         clock.tick(60)
