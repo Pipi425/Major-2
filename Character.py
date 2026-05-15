@@ -63,7 +63,14 @@ class Player:
 
         self.max_health = 6
         self.health = 6
+        self.hp = self.health
+
         self.dead = False
+
+
+        self.defense = 0
+        self.weapon = None
+        self.armor = None
 
         self.Full_heart = pygame.transform.scale(
             pygame.image.load("HealthBars/Full_heart.png").convert_alpha(), (40, 40)
@@ -182,3 +189,6 @@ class Player:
                 image = self.Empty_heart
 
             screen.blit(image, (heart_x + i * spacing, heart_y))
+    def set_position(self, x, y):
+        self.x = x
+        self.y = y
