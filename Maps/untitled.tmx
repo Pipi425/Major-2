@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="40" height="24" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="28">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="40" height="24" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="49">
  <tileset firstgid="1" source="Oak_Tree.tsx"/>
  <tileset firstgid="21" source="Oak_Tree_Small.tsx"/>
  <tileset firstgid="39" name="Bridge_Wood" tilewidth="16" tileheight="16" tilecount="36" columns="9">
@@ -94,8 +94,6 @@
 </data>
  </layer>
  <objectgroup id="4" name="collision">
-  <object id="1" x="9.62271" y="-34.8823" width="222.124" height="89.0101"/>
-  <object id="2" x="410.168" y="-32.0757" width="220.119" height="85.8025"/>
   <object id="3" x="183.338" y="191.107" width="104.409" height="41.6395"/>
   <object id="4" x="353.314" y="178.055" width="73.6459" height="54.6907"/>
   <object id="6" x="162.636" y="234.722" width="89.1304" height="152.693"/>
@@ -104,9 +102,6 @@
   <object id="12" x="390.966" y="232.236" width="65.3386" height="144.881"/>
   <object id="13" x="282.163" y="220.961" width="5.27604" height="28.9127"/>
   <object id="14" x="352.651" y="216.74" width="5.48708" height="33.1335"/>
-  <object id="15" x="282.381" y="122.763" width="5.56808" height="22.2723"/>
-  <object id="16" x="352.91" y="124.619" width="4.77264" height="20.6814"/>
-  <object id="17" x="286.889" y="145.831"/>
   <object id="20" x="287.154" y="146.361" height="90.1498"/>
   <object id="21" x="352.38" y="145.831" height="96.2482"/>
   <object id="22" x="206.581" y="149.921" width="70.3854" height="14.429"/>
@@ -115,5 +110,20 @@
   <object id="25" x="389.583" y="0.351927" width="18.3002" height="158.015"/>
   <object id="26" x="265.565" y="147.117" width="21.6903" height="88.0816"/>
   <object id="27" x="352.735" y="146.251" width="20.7118" height="86.2288"/>
+  <object id="32" x="-7.58745" y="-17.1982" width="17.4511" height="75.6215"/>
+  <object id="33" x="9.01822" y="54.7105" width="231.468" height="16.834"/>
+  <object id="34" x="230.672" y="-16.734" width="14.6745" height="71.0553"/>
+  <object id="35" x="-6.98679" y="-102.261" width="257.241" height="85.747"/>
+  <object id="36" x="398.817" y="0.852781" width="10.8019" height="82.4355"/>
+  <object id="38" x="409.898" y="54.4297" width="233.629" height="22.1906"/>
+  <object id="39" x="629.8" y="0.582878" width="13.8434" height="53.3333"/>
+  <object id="40" x="629.945" y="-1.31148" width="23.898" height="6.41166"/>
+  <object id="41" x="396.707" y="-36.1933" width="13.4838" height="36.903"/>
+  <object id="42" x="397.417" y="-68.1286" width="219.999" height="50.3868"/>
+  <object id="43" x="614.979" y="-56.2244" width="71.7346" height="38.5816"/>
+  <object id="44" x="630.877" y="-17.2551" width="21.5204" height="25.7857"/>
+  <object id="45" x="630.101" y="-39.7449" width="40.3265" height="41.6836"/>
+  <object id="47" x="282.894" y="133.922" width="4.33651" height="10.9688"/>
+  <object id="48" x="352.278" y="133.412" width="5.86705" height="13.7748"/>
  </objectgroup>
 </map>

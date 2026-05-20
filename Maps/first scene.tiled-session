@@ -1,5 +1,5 @@
 {
-    "activeFile": "first scene.tmx",
+    "activeFile": "untitled.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -47,11 +47,11 @@
             "scaleInEditor": 1
         },
         "first scene.tmx": {
-            "scale": 0.6079,
+            "scale": 0.5461,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 1106.267478203652,
-                "y": 398.91429511432796
+                "x": 760.8496612342062,
+                "y": 357.99304156747843
             }
         },
         "first scene.tmx#Path_Tile": {
@@ -68,11 +68,11 @@
             "expandedObjectLayers": [
                 4
             ],
-            "scale": 1.2458,
+            "scale": 2.0007,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 386.4986354149944,
-                "y": 112.77893722908973
+                "x": 338.63147898235616,
+                "y": 299.6451242065277
             }
         },
         "untitled.tmx#Bridge_Wood": {
@@ -106,14 +106,16 @@
     "map.tileWidth": 16,
     "map.width": 40,
     "openFiles": [
-        "first scene.tmx"
+        "first scene.tmx",
+        "untitled.tmx"
     ],
     "project": "first scene.tiled-project",
     "recentFiles": [
+        "first scene.tmx",
+        "untitled.tmx",
         "Bridge_Wood.tsx",
         "cave.tsx",
-        "items.tsx",
-        "first scene.tmx"
+        "items.tsx"
     ],
     "tileset.embedInMap": false,
     "tileset.lastUsedFormat": "tsx",
