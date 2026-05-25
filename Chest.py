@@ -11,6 +11,12 @@ class Chest:
             image = pygame.transform.scale(image, (32, 32))
             self.images.append(image)
 
+        self.music = []
+        self.music.append(pygame.mixer.Sound("SoundEffects/Chest_opening_sound.mp3"))
+        self.music.append(pygame.mixer.Sound("SoundEffects/Chest_opening_music.mp3"))
+        self.music[0].set_volume(0.5)
+        self.music[1].set_volume(4.0)
+
         self.frame = 0
         self.image = self.images[self.frame]
 
@@ -21,7 +27,7 @@ class Chest:
         self.opening = False
 
         self.animation_timer = 0
-        self.animation_speed = 10
+        self.animation_speed = 20
 
         self.show_prompt = False
         self.state = "idle"
@@ -53,6 +59,9 @@ class Chest:
             if keys[pygame.K_f] and not self.opening:
                 self.opening = True
                 self.state = "opening"
+
+                self.music[0].play()
+                self.music[1].play()
         else:
             self.show_prompt = False
 

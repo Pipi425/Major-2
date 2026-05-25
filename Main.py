@@ -11,6 +11,7 @@ from Buttons import Button
 from Inventory import Inventory, InventoryUI, Item
 from Animal import Animal
 from Chest import Chest
+from Sprite import SpriteObject
 
 pygame.init()
 
@@ -381,6 +382,7 @@ def first_scene(player):
         clock.tick(60)
 
 def second_scene(player):
+
     player.set_position(617, 720)
 
     pygame.mixer.music.stop()
@@ -392,6 +394,9 @@ def second_scene(player):
     last_melee_time = 0
 
     enemies = []
+
+    inventory = Inventory(cols=6, rows=3)
+    inventory_ui = InventoryUI(inventory, player)
 
     click = pygame.mixer.Sound("Musics/Hover2.mp3")
     click.set_volume(0.2)
@@ -415,6 +420,8 @@ def second_scene(player):
         sound.set_volume(0.1)
         melee_sounds.append(sound)
 
+    ChangeScene = pygame.mixer.Sound("SoundEffects/ChangeScene.mp3")
+
     pygame.mixer.music.load("Musics/Main World.mp3")
     pygame.mixer.music.set_volume(0.3)
     pygame.mixer.music.play(loops=-1)
@@ -422,9 +429,6 @@ def second_scene(player):
     pygame.display.set_caption("Major 2")
 
     Screen = pygame.display.set_mode((1280, 768))
-
-    Screen1 = pygame.surface.Surface((1280, 768))
-    Screen1.fill((255, 0, 0, 128))
 
     arrow_images = load_arrow_images()
     arrows = []
@@ -443,7 +447,6 @@ def second_scene(player):
         Animal(1000, 20, "Sheep", "sheep"),
         Animal(50, 10, "Cow", "cow", size=(72,72)),
         Animal(1150, 15, "Sheep", "sheep"),
-
     ]
 
     tiled_map = pytmx.load_pygame("Maps/untitled.tmx", pixelalpha=True)
@@ -513,11 +516,25 @@ def second_scene(player):
             )
         )
 
+    fade_surface = pygame.Surface((1280, 768))
+    fade_surface.fill((255, 255, 255))
+
+    fade_alpha = 0
+    fading = False
+    fade_start = 0
+
+    scene_change_rect = pygame.Rect(0, 0, 1280, -10)
+
     Game_active = True
 
     clock = pygame.time.Clock()
 
     while Game_active:
+
+        now = pygame.time.get_ticks()
+
+        ui_open = inventory_ui.open
+        freeze_world = ui_open or fading
 
         for event in pygame.event.get():
 
@@ -552,33 +569,55 @@ def second_scene(player):
 
                 current_time = pygame.time.get_ticks()
 
-                if event.key == pygame.K_e:
+                if event.key == pygame.K_i:
+                    inventory_ui.open = not inventory_ui.open
 
-                    if current_time - last_arrow_time >= arrow_cooldown:
+                if inventory_ui.open:
 
-                        arrow1.play()
+                    if event.key == pygame.K_LEFT:
+                        inventory_ui.move_cursor(-1, 0)
 
-                        x, y = player.get_center()
+                    if event.key == pygame.K_RIGHT:
+                        inventory_ui.move_cursor(1, 0)
 
-                        arrows.append(
-                            Arrow(x, y, player.direction, arrow_images)
-                        )
+                    if event.key == pygame.K_UP:
+                        inventory_ui.move_cursor(0, -1)
 
-                        last_arrow_time = current_time
+                    if event.key == pygame.K_DOWN:
+                        inventory_ui.move_cursor(0, 1)
 
-                if event.key == pygame.K_q:
+                if not freeze_world:
 
-                    if current_time - last_melee_time >= melee_cooldown:
+                    if event.key == pygame.K_e:
 
-                        random.choice(melee_sounds).play()
+                        if current_time - last_arrow_time >= arrow_cooldown:
 
-                        x, y = player.get_center()
+                            arrow1.play()
 
-                        melee_weapons.append(
-                            MeleeWeapon(x, y, player.direction, melee_images)
-                        )
+                            x, y = player.get_center()
 
-                        last_melee_time = current_time
+                            arrows.append(
+                                Arrow(x, y, player.direction, arrow_images)
+                            )
+
+                            last_arrow_time = current_time
+
+                    if event.key == pygame.K_q:
+
+                        if player.weapon is None:
+                            continue
+
+                        if current_time - last_melee_time >= melee_cooldown:
+
+                            random.choice(melee_sounds).play()
+
+                            x, y = player.get_center()
+
+                            melee_weapons.append(
+                                MeleeWeapon(x, y, player.direction, melee_images)
+                            )
+
+                            last_melee_time = current_time
 
                 if event.key == pygame.K_f:
 
@@ -598,7 +637,8 @@ def second_scene(player):
 
         keys = pygame.key.get_pressed()
 
-        player.move(keys, walls)
+        if not freeze_world:
+            player.move(keys, walls)
 
         near_npc = player.get_rect().inflate(40, 40).colliderect(npc.get_rect())
 
@@ -649,6 +689,14 @@ def second_scene(player):
 
         Screen.blit(SF, (0, 0))
 
+        if player.get_rect().colliderect(scene_change_rect) and not fading:
+            fading = True
+            fade_start = now
+
+            ChangeScene.play()
+
+            pygame.mixer.music.fadeout(1000)
+
         dialogue.update()
 
         npc.draw(Screen)
@@ -674,6 +722,354 @@ def second_scene(player):
 
         dialogue.draw(Screen)
 
+        if inventory_ui.open:
+            inventory_ui.draw(Screen)
+
+        if fading:
+
+            elapsed = now - fade_start
+
+            fade_alpha = min(255, int(elapsed / 2000 * 255))
+
+            fade_surface.set_alpha(fade_alpha)
+
+            Screen.blit(fade_surface, (0, 0))
+
+            if elapsed >= 2000:
+                return "eldermoor_scene"
+
+        pygame.display.update()
+
+        clock.tick(60)
+
+def eldermoor_scene(player):
+
+    player.set_position(617, 720)
+
+    pygame.mixer.music.stop()
+
+    arrow_cooldown = 1500
+    melee_cooldown = 750
+
+    last_arrow_time = 0
+    last_melee_time = 0
+
+    enemies = []
+
+    click = pygame.mixer.Sound("Musics/Hover2.mp3")
+    click.set_volume(0.2)
+
+    arrow1 = pygame.mixer.Sound("SoundEffects/Arrow1.mp3")
+    arrow1.set_volume(0.05)
+
+    arrow_hit = pygame.mixer.Sound("SoundEffects/Arrow_hit.mp3")
+    arrow_hit.set_volume(0.05)
+
+    melee_hit = pygame.mixer.Sound("SoundEffects/Melee_slash.mp3")
+    melee_hit.set_volume(0.1)
+
+    melee_sounds = []
+
+    for i in range(1, 4):
+        s = pygame.mixer.Sound(f"SoundEffects/Melee{i}.mp3")
+        s.set_volume(0.1)
+        melee_sounds.append(s)
+
+    pygame.mixer.music.load("Musics/Main World.mp3")
+    pygame.mixer.music.set_volume(0.3)
+    pygame.mixer.music.play(loops=-1)
+
+    river = pygame.mixer.Sound("SoundEffects/River.mp3")
+    river.set_volume(0.01)
+    river.play(loops=-1)
+
+    bird = pygame.mixer.Sound("SoundEffects/Bird.mp3")
+    bird.set_volume(0.1)
+    bird.play(loops=-1)
+
+    Screen = pygame.display.set_mode((1280, 768))
+
+    arrow_images = load_arrow_images()
+    arrows = []
+
+    melee_images = load_melee_images()
+    melee_weapons = []
+
+    tiled_map = pytmx.load_pygame(
+        "Maps/Eldermoor/Eldermoor City.tmx",
+        pixelalpha=True
+    )
+
+    SCALE = 2
+
+    b1 = pygame.Surface(
+        (
+            tiled_map.width * tiled_map.tilewidth * SCALE,
+            tiled_map.height * tiled_map.tileheight * SCALE
+        )
+    ).convert_alpha()
+
+    MenuButton = Button(
+        "Graphics/MenuButton.png",
+        "Graphics/Hovered_MenuButton.png",
+        (20, 680),
+        size=(164, 66)
+    )
+
+    regular_buttons = pygame.sprite.Group()
+    regular_buttons.add(MenuButton)
+
+    houses = [
+
+        SpriteObject(
+            352,
+            416,
+            "Graphics/House.png",
+            size=(192, 256)
+        ),
+
+        SpriteObject(
+            736,
+            416,
+            "Graphics/House.png",
+            size=(192, 256)
+        ),
+
+        SpriteObject(
+            -32,
+            64,
+            "Graphics/House.png",
+            size=(192, 256)
+        ),
+
+        SpriteObject(
+            160,
+            64,
+            "Graphics/House.png",
+            size=(192, 256)
+        ),
+
+        SpriteObject(
+            352,
+            64,
+            "Graphics/House.png",
+            size=(192, 256)
+        ),
+
+        SpriteObject(
+            736,
+            64,
+            "Graphics/House.png",
+            size=(192, 256)
+        ),
+
+        SpriteObject(
+            928,
+            64,
+            "Graphics/House.png",
+            size=(192, 256)
+        ),
+
+        SpriteObject(
+            1120,
+            64,
+            "Graphics/House.png",
+            size=(192, 256)
+        )
+
+    ]
+
+    def draw_map(surface):
+
+        for layer in tiled_map.visible_layers:
+
+            if isinstance(layer, pytmx.TiledTileLayer):
+
+                for x, y, gid in layer:
+
+                    tile_image = tiled_map.get_tile_image_by_gid(gid)
+
+                    if tile_image:
+
+                        tile_image = pygame.transform.scale(
+                            tile_image,
+                            (
+                                tiled_map.tilewidth * SCALE,
+                                tiled_map.tileheight * SCALE
+                            )
+                        )
+
+                        surface.blit(
+                            tile_image,
+                            (
+                                x * tiled_map.tilewidth * SCALE,
+                                y * tiled_map.tileheight * SCALE
+                            )
+                        )
+
+        return surface
+
+    SF = draw_map(b1)
+
+    walls = []
+
+    object_layer = tiled_map.get_layer_by_name("collision")
+
+    for obj in object_layer:
+
+        walls.append(
+            pygame.Rect(
+                obj.x * SCALE,
+                obj.y * SCALE,
+                obj.width * SCALE,
+                obj.height * SCALE
+            )
+        )
+
+    clock = pygame.time.Clock()
+
+    Game_active = True
+
+    while Game_active:
+
+        for event in pygame.event.get():
+
+            mouse_pos = pygame.mouse.get_pos()
+
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+
+                if MenuButton.is_clicked(mouse_pos):
+                    click.play()
+                    return "menu"
+
+            if event.type == pygame.MOUSEMOTION:
+
+                for x in regular_buttons.sprites():
+
+                    if x.rect.collidepoint(mouse_pos):
+
+                        x.image = x.Image_list[1]
+
+                        if not x.hovered:
+                            click.play()
+                            x.hovered = True
+
+                    else:
+                        x.image = x.Image_list[0]
+                        x.hovered = False
+
+            if event.type == pygame.KEYDOWN:
+
+                current_time = pygame.time.get_ticks()
+
+                if event.key == pygame.K_e:
+
+                    if current_time - last_arrow_time >= arrow_cooldown:
+
+                        arrow1.play()
+
+                        x, y = player.get_center()
+
+                        arrows.append(
+                            Arrow(x, y, player.direction, arrow_images)
+                        )
+
+                        last_arrow_time = current_time
+
+                if event.key == pygame.K_q:
+
+                    if player.weapon is None:
+                        continue
+
+                    if current_time - last_melee_time >= melee_cooldown:
+
+                        random.choice(melee_sounds).play()
+
+                        x, y = player.get_center()
+
+                        melee_weapons.append(
+                            MeleeWeapon(x, y, player.direction, melee_images)
+                        )
+
+                        last_melee_time = current_time
+
+        keys = pygame.key.get_pressed()
+
+        player.move(keys, walls)
+
+        for enemy in enemies:
+            enemy.move(player, walls)
+
+        for arrow in arrows[:]:
+
+            alive = arrow.update()
+
+            if not alive or arrow.off_screen(1280, 768):
+
+                arrows.remove(arrow)
+
+                continue
+
+            for enemy in enemies:
+
+                if enemy.alive and arrow.hit_enemy(enemy.get_rect()):
+
+                    enemy.hit()
+
+                    arrows.remove(arrow)
+
+                    arrow_hit.play()
+
+                    break
+
+        for weapon in melee_weapons[:]:
+
+            alive = weapon.update()
+
+            if not alive:
+
+                melee_weapons.remove(weapon)
+
+                continue
+
+            for enemy in enemies:
+
+                if enemy.alive and weapon.hit_enemy(enemy):
+
+                    enemy.hit()
+
+                    melee_hit.play()
+
+        for enemy in enemies:
+
+            if enemy.alive and enemy.get_rect().colliderect(player.get_hurt_rect()):
+
+                player.take_hit()
+
+        Screen.blit(SF, (0, 0))
+
+        for wall in walls:
+            pygame.draw.rect(Screen, (255, 0, 0), wall, 2)
+
+        player.draw(Screen)
+
+        player.draw_health_bar(Screen)
+
+        regular_buttons.draw(Screen)
+
+        for i in houses:
+            i.draw(Screen)
+
+        for arrow in arrows:
+            arrow.draw(Screen)
+
+        for weapon in melee_weapons:
+            weapon.draw(Screen)
+
         pygame.display.update()
 
         clock.tick(60)
@@ -692,6 +1088,9 @@ while True:
 
     elif current_scene == "second_scene":
         current_scene = second_scene(player)
+
+    elif current_scene == "eldermoor_scene":
+        current_scene = eldermoor_scene(player)
 
     elif current_scene == "quit":
         break
