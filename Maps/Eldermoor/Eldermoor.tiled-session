@@ -1,0 +1,62 @@
+{
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "": {
+            "scaleInDock": 1
+        },
+        "#Outdoor": {
+            "scaleInDock": 2.7136
+        },
+        "#city": {
+            "scaleInDock": 1
+        },
+        "#fence": {
+            "scaleInDock": 1.3925
+        },
+        "/Users/milanli/PyCharmMiscProject/ICS4U/Real Major 2/Maps/untitled.tmx": {
+            "expandedObjectLayers": [
+                4
+            ],
+            "scale": 1.2617,
+            "selectedLayer": 3,
+            "viewCenter": {
+                "x": 282.5552825552826,
+                "y": 202.50455734326704
+            }
+        },
+        "/Users/milanli/PyCharmMiscProject/ICS4U/Real Major 2/Maps/untitled.tmx#Bridge_Wood": {
+            "scaleInDock": 1
+        },
+        "Eldermoor City.tmx": {
+            "expandedObjectLayers": [
+                4
+            ],
+            "scale": 2.1959,
+            "selectedLayer": 6,
+            "viewCenter": {
+                "x": 290.7691607085933,
+                "y": 272.5533949633408
+            }
+        }
+    },
+    "last.externalTilesetPath": "/Users/milanli/PyCharmMiscProject/ICS4U/Real Major 2/Maps/Eldermoor",
+    "last.imagePath": "/Users/milanli/PyCharmMiscProject/ICS4U/Real Major 2/Maps/Cute_Fantasy_Free/Outdoor decoration",
+    "map.height": 24,
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 40,
+    "openFiles": [
+    ],
+    "project": "Eldermoor.tiled-project",
+    "recentFiles": [
+    ],
+    "tileset.embedInMap": true,
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}

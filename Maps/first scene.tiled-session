@@ -1,7 +1,6 @@
 {
     "activeFile": "untitled.tmx",
     "expandedProjectPaths": [
-        "."
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -50,8 +49,8 @@
             "scale": 0.5461,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 760.8496612342062,
-                "y": 357.99304156747843
+                "x": 640.9082585607032,
+                "y": 357.0774583409632
             }
         },
         "first scene.tmx#Path_Tile": {
@@ -71,8 +70,8 @@
             "scale": 2.0007,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 338.63147898235616,
-                "y": 299.6451242065277
+                "x": 571.799870045484,
+                "y": 38.48652971459988
             }
         },
         "untitled.tmx#Bridge_Wood": {
