@@ -3,7 +3,8 @@ import math
 
 
 class Chest:
-    def __init__(self, x, y):
+    def __init__(self, x, y, chest_id):
+        self.chest_id = chest_id
         self.images = []
 
         for i in range(4):
@@ -15,7 +16,7 @@ class Chest:
         self.music.append(pygame.mixer.Sound("SoundEffects/Chest_opening_sound.mp3"))
         self.music.append(pygame.mixer.Sound("SoundEffects/Chest_opening_music.mp3"))
         self.music[0].set_volume(0.5)
-        self.music[1].set_volume(4.0)
+        self.music[1].set_volume(5.0)
 
         self.frame = 0
         self.image = self.images[self.frame]
@@ -132,5 +133,26 @@ class Chest:
         if line:
             screen.blit(font.render(line, True, (255, 255, 255)), (x_text, y_text))
 
+        small_font = pygame.font.SysFont(None, 24)
+        text = small_font.render("Press F to Continue", True, (200, 200, 200))
+
+        screen.blit(
+            text,
+            (
+                screen.get_width() - text.get_width() - 20,
+                screen.get_height() - text.get_height() - 15
+            )
+        )
+
     def close_ui(self):
         self.state = "ui_done"
+
+    def load_state(self, game_data):
+
+        if self.chest_id in game_data.get("looted_chests", set()):
+            self.looted = True
+            self.opened = True
+            self.state = "ui_done"
+
+            self.frame = 3
+            self.image = self.images[3]

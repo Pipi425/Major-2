@@ -1,18 +1,83 @@
 import pygame
 
 
+# ================= ITEM SYSTEM =================
 class Item:
-    def __init__(self, name, image_path=None, description="", item_type=None):
+    def __init__(self, name, image_path=None, description="", item_type="misc"):
         self.name = name
         self.description = description
         self.type = item_type
+        self.sounds = [
+            pygame.mixer.Sound("SoundEffects/Bite.mp3"),
+            pygame.mixer.Sound("SoundEffects/Equip.mp3")
+        ]
+        self.sounds[1].set_volume(0.5)
+
 
         self.image = None
         if image_path:
             self.image = pygame.image.load(image_path).convert_alpha()
             self.image = pygame.transform.scale(self.image, (32, 32))
 
+    def use(self, player, inventory):
+        print(f"{self.name} cannot be used.")
 
+
+class Weapon(Item):
+    def __init__(self, name, image_path, description, attack=0):
+        super().__init__(name, image_path, description, "weapon")
+        self.attack = attack
+
+    def use(self, player, inventory):
+        self.sounds[1].play()
+
+        if getattr(player, "weapon", None):
+            inventory.add_item(player.weapon)
+
+        player.weapon = self
+        inventory.remove_item(self)
+
+
+class Armor(Item):
+    def __init__(self, name, image_path, description, defense=0):
+        super().__init__(name, image_path, description, "armor")
+        self.defense = defense
+
+    def use(self, player, inventory):
+        self.sounds[1].play()
+
+        if getattr(player, "armor", None):
+            inventory.add_item(player.armor)
+
+        player.armor = self
+        inventory.remove_item(self)
+
+
+class Consumable(Item):
+    def __init__(self, name, image_path, description, heal=0):
+        super().__init__(name, image_path, description, "consumable")
+        self.heal = heal
+
+    def use(self, player, inventory):
+        self.sounds[0].play()
+
+        if player.health + self.heal >= player.max_health:
+            player.health = player.max_health
+            inventory.remove_item(self)
+        else:
+            player.health += self.heal
+            inventory.remove_item(self)
+
+
+class Misc(Item):
+    def __init__(self, name, image_path, description):
+        super().__init__(name, image_path, description, "misc")
+
+    def use(self, player, inventory):
+        pass
+
+
+# ================= INVENTORY =================
 class Inventory:
     def __init__(self, cols=5, rows=3):
         self.cols = cols
@@ -32,9 +97,16 @@ class Inventory:
             for x in range(self.cols):
                 if self.grid[y][x] == item:
                     self.grid[y][x] = None
-                    return
+                    return True
+        return False
+
+    def clear(self):
+        for y in range(self.rows):
+            for x in range(self.cols):
+                self.grid[y][x] = None
 
 
+# ================= UI =================
 class InventoryUI:
     def __init__(self, inventory, player, screen_width=1280, screen_height=768):
 
@@ -64,20 +136,25 @@ class InventoryUI:
 
         self.hover_timer = 0
         self.hover_item = None
-        self.hover_pos = (0, 0)
+        self.hover_pos = pygame.Rect(0, 0, 0, 0)
         self.hover_delay = 750
         self.font = pygame.font.SysFont(None, 22)
 
+        self.weapon_rect = pygame.Rect(self.right_x + 20, self.y + 60, 32, 32)
+        self.armor_rect = pygame.Rect(self.right_x + 20, self.y + 150, 32, 32)
+
+    # ================= CURSOR =================
     def move_cursor(self, dx, dy):
         self.cursor_x = (self.cursor_x + dx) % self.inv.cols
         self.cursor_y = (self.cursor_y + dy) % self.inv.rows
 
+    def get_selected_item(self):
+        return self.inv.grid[self.cursor_y][self.cursor_x]
+
+    # ================= DRAW =================
     def draw_status(self, screen):
-        pygame.draw.rect(
-            screen,
-            (30, 30, 30),
-            (self.left_x, self.y, self.panel_w, self.grid_height)
-        )
+        pygame.draw.rect(screen, (30, 30, 30),
+                         (self.left_x, self.y, self.panel_w, self.grid_height))
 
         font = pygame.font.SysFont(None, 28)
 
@@ -88,35 +165,35 @@ class InventoryUI:
         screen.blit(def_text, (self.left_x + 20, self.y + 70))
 
     def draw_equipment(self, screen):
-        pygame.draw.rect(
-            screen,
-            (30, 30, 30),
-            (self.right_x, self.y, self.panel_w, self.grid_height)
-        )
+        pygame.draw.rect(screen, (30, 30, 30),
+                         (self.right_x, self.y, self.panel_w, self.grid_height))
 
         font = pygame.font.SysFont(None, 28)
 
         weapon = getattr(self.player, "weapon", None)
         armor = getattr(self.player, "armor", None)
 
-        w_text = font.render("Weapon:", True, (255, 255, 255))
-        a_text = font.render("Armor:", True, (255, 255, 255))
+        screen.blit(font.render("Weapon:", True, (255, 255, 255)),
+                    (self.right_x + 20, self.y + 30))
+        screen.blit(font.render("Armor:", True, (255, 255, 255)),
+                    (self.right_x + 20, self.y + 120))
 
-        screen.blit(w_text, (self.right_x + 20, self.y + 30))
-        screen.blit(a_text, (self.right_x + 20, self.y + 120))
+        weapon_pos = (self.right_x + 20, self.y + 60)
+        armor_pos = (self.right_x + 20, self.y + 150)
+
+        self.weapon_rect.topleft = weapon_pos
+        self.armor_rect.topleft = armor_pos
 
         if weapon and weapon.image:
-            screen.blit(weapon.image, (self.right_x + 20, self.y + 60))
+            screen.blit(weapon.image, weapon_pos)
 
         if armor and armor.image:
-            screen.blit(armor.image, (self.right_x + 20, self.y + 150))
+            screen.blit(armor.image, armor_pos)
 
     def draw_grid(self, screen):
-        pygame.draw.rect(
-            screen,
-            (20, 20, 20),
-            (self.grid_x - 10, self.y - 10, self.grid_width + 20, self.grid_height + 20)
-        )
+        pygame.draw.rect(screen, (20, 20, 20),
+                         (self.grid_x - 10, self.y - 10,
+                          self.grid_width + 20, self.grid_height + 20))
 
         for y in range(self.inv.rows):
             for x in range(self.inv.cols):
@@ -124,47 +201,22 @@ class InventoryUI:
                 slot_x = self.grid_x + x * (self.slot_size + self.padding)
                 slot_y = self.y + y * (self.slot_size + self.padding)
 
-                pygame.draw.rect(
-                    screen,
-                    (80, 80, 80),
-                    (slot_x, slot_y, self.slot_size, self.slot_size)
-                )
+                pygame.draw.rect(screen, (80, 80, 80),
+                                 (slot_x, slot_y, self.slot_size, self.slot_size))
 
                 item = self.inv.grid[y][x]
 
                 if item and item.image:
-                    screen.blit(
-                        item.image,
-                        (
-                            slot_x + (self.slot_size - item.image.get_width()) // 2,
-                            slot_y + (self.slot_size - item.image.get_height()) // 2
-                        )
-                    )
+                    screen.blit(item.image,
+                                (slot_x + (self.slot_size - item.image.get_width()) // 2,
+                                 slot_y + (self.slot_size - item.image.get_height()) // 2))
 
                 if x == self.cursor_x and y == self.cursor_y:
-                    pygame.draw.rect(
-                        screen,
-                        (255, 215, 0),
-                        (slot_x, slot_y, self.slot_size, self.slot_size),
-                        3
-                    )
-
-    def update_hover(self, mouse_pos):
-        item, rect = self.get_item_under_mouse(mouse_pos)
-
-        current_time = pygame.time.get_ticks()
-
-        if item:
-            if self.hover_item != item:
-                self.hover_item = item
-                self.hover_timer = current_time
-                self.hover_pos = rect
-        else:
-            self.hover_item = None
+                    pygame.draw.rect(screen, (255, 215, 0),
+                                     (slot_x, slot_y, self.slot_size, self.slot_size), 3)
 
     def draw(self, screen):
         mouse_pos = pygame.mouse.get_pos()
-
         self.update_hover(mouse_pos)
 
         self.draw_status(screen)
@@ -176,35 +228,26 @@ class InventoryUI:
         if not self.hover_item:
             return
 
-        current_time = pygame.time.get_ticks()
-
-        if current_time - self.hover_timer < self.hover_delay:
+        if pygame.time.get_ticks() - self.hover_timer < self.hover_delay:
             return
 
         text = self.hover_item.description
         if not text:
             return
 
-        font = self.font
-        render = font.render(text, True, (255, 255, 255))
-
-        padding = 8
+        render = self.font.render(text, True, (255, 255, 255))
 
         x = self.hover_pos.x
         y = self.hover_pos.y + 45
 
-        bg_rect = pygame.Rect(
-            x,
-            y,
-            render.get_width() + padding * 2,
-            render.get_height() + padding * 2
-        )
+        bg = pygame.Rect(x, y, render.get_width() + 16, render.get_height() + 16)
 
-        pygame.draw.rect(screen, (0, 0, 0), bg_rect, border_radius=6)
-        pygame.draw.rect(screen, (255, 255, 255), bg_rect, 1, border_radius=6)
+        pygame.draw.rect(screen, (0, 0, 0), bg, border_radius=6)
+        pygame.draw.rect(screen, (255, 255, 255), bg, 1, border_radius=6)
 
-        screen.blit(render, (x + padding, y + padding))
+        screen.blit(render, (x + 8, y + 8))
 
+    # ================= MOUSE =================
     def get_item_under_mouse(self, mouse_pos):
         mx, my = mouse_pos
 
@@ -219,30 +262,36 @@ class InventoryUI:
                 if rect.collidepoint(mx, my):
                     return self.inv.grid[y][x], rect
 
-        weapon = getattr(self.player, "weapon", None)
-        armor = getattr(self.player, "armor", None)
+        if self.weapon_rect.collidepoint(mx, my):
+            return getattr(self.player, "weapon", None), self.weapon_rect
 
-        weapon_rect = pygame.Rect(self.right_x + 20, self.y + 60, 32, 32)
-        armor_rect = pygame.Rect(self.right_x + 20, self.y + 150, 32, 32)
-
-        if weapon_rect.collidepoint(mx, my):
-            return weapon, weapon_rect
-
-        if armor_rect.collidepoint(mx, my):
-            return armor, armor_rect
+        if self.armor_rect.collidepoint(mx, my):
+            return getattr(self.player, "armor", None), self.armor_rect
 
         return None, None
 
-    def handle_click(self, mouse_pos):
-        if not self.open:
-            return
-
+    def update_hover(self, mouse_pos):
         item, rect = self.get_item_under_mouse(mouse_pos)
+
+        now = pygame.time.get_ticks()
+
+        if item:
+            if item != self.hover_item:
+                self.hover_item = item
+                self.hover_timer = now
+                self.hover_pos = rect
+        else:
+            self.hover_item = None
+            self.hover_pos = pygame.Rect(0, 0, 0, 0)
+            self.hover_timer = 0
+
+    # ================= USE =================
+    def handle_use(self, player, inventory):
+        item = self.get_selected_item()
         if not item:
             return
 
-        if item.type == "weapon":
-            self.player.weapon = item
+        if not hasattr(item, "use"):
+            return
 
-        elif item.type == "armor":
-            self.player.armor = item
+        item.use(player, inventory)

@@ -31,7 +31,6 @@ class Enemy:
         self.count = 0
         self.speed = 1
         self.hp = 5
-        self.max_hp = 5
         self.alive = True
 
         self.is_hit = False
@@ -109,6 +108,7 @@ class Enemy:
         if self.state == "idle":
             if dist_sq <= DETECTION_RANGE * DETECTION_RANGE:
                 self.state = "chase"
+
 
         elif self.state == "lost":
 
@@ -191,23 +191,6 @@ class Enemy:
             self.alive = False
             self.SoundEffects[0].play()
 
-    def draw_health_bar(self, screen):
-        if not self.alive:
-            return
-
-        bar_x = self.x + 8
-        bar_y = self.y - 8
-
-        width = 55
-        height = 6
-
-        current_width = int(width * self.hp / self.max_hp)
-
-        pygame.draw.rect(screen, (40, 40, 40), (bar_x, bar_y, width, height))
-        pygame.draw.rect(screen, (180, 30, 30), (bar_x, bar_y, current_width, height))
-
     def draw(self, screen):
         if self.alive:
             screen.blit(self.get_image(), (self.x, self.y))
-
-        self.draw_health_bar(screen)

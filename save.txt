@@ -1,0 +1,15 @@
+scene=MazeSolved
+x=134
+y=540
+health=6
+weapon=None
+looted_chests=maze_chest
+npc_gift_given=False
+npc_gift=False
+Scene_Back=False
+House_Out=False
+MazeSolved=True
+Boss1=False
+Boss2=False
+Boss3=False
+inventory=Key

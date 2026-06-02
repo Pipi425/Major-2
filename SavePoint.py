@@ -7,19 +7,64 @@ SAVE_POINT_IMAGE = "Graphics/SavePoint.png"
 SAVE_POINTS = {
     "cave_save": {
         "scene": "first_scene",
-        "x": 280,
+        "x": 275,
         "y": 220,
-        "spawn_x": 280,
-        "spawn_y": 300
+        "spawn_x": 297,
+        "spawn_y": 389
     },
 
     "village_save": {
         "scene": "second_scene",
-        "x": 560,
-        "y": 610,
+        "x": 595,
+        "y": 32,
         "spawn_x": 617,
         "spawn_y": 720
+    },
+
+    "eldermoor_save": {
+        "scene": "eldermoor_scene",
+        "x": 595,
+        "y": 352,
+        "spawn_x": 617,
+        "spawn_y": 720
+    },
+
+    "SnowVillage_save": {
+        "scene": "SnowVillage",
+        "x": 291,
+        "y": 352,
+        "spawn_x": 1248,
+        "spawn_y": 288
+    },
+    "Maze_save": {
+        "scene": "Maze",
+        "x": 83,
+        "y": 592,
+        "spawn_x": 134,
+        "spawn_y": 540
+    },
+    "IroHouse_save": {
+        "scene": "IroHouse",
+        "x": 483,
+        "y": 400,
+        "spawn_x": 617,
+        "spawn_y": 720
+    },
+    "IroHome_save": {
+        "scene": "IroHome",
+        "x": 595,
+        "y": 300,
+        "spawn_x": 617,
+        "spawn_y": 720
+    },
+    "MazeSolved_save": {
+        "scene": "MazeSolved",
+        "x": 83,
+        "y": 592,
+        "spawn_x": 134,
+        "spawn_y": 540
     }
+
 }
 
 
@@ -62,5 +107,5 @@ class SavePoint:
             text2 = font.render("R: Reset", True, (255, 255, 255))
 
             # Show
-            screen.blit(text1, (self.rect.x, self.rect.y - 50))
-            screen.blit(text2, (self.rect.x, self.rect.y - 25))
+            screen.blit(text1, (self.rect.x, self.rect.y + 50))
+            screen.blit(text2, (self.rect.x, self.rect.y + 75))
