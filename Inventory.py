@@ -24,9 +24,10 @@ class Item:
 
 
 class Weapon(Item):
-    def __init__(self, name, image_path, description, attack=0):
+    def __init__(self, name, image_path, description, attack=0, cooldown=0):
         super().__init__(name, image_path, description, "weapon")
         self.attack = attack
+        self.cooldown = cooldown
 
     def use(self, player, inventory):
         self.sounds[1].play()
@@ -37,19 +38,74 @@ class Weapon(Item):
         player.weapon = self
         inventory.remove_item(self)
 
+class Bow(Item):
+    def __init__(self, name, image_path, description,
+                 damage=0, cooldown=0):
+        super().__init__(name, image_path, description, "bow")
+
+        self.damage = damage
+        self.cooldown = cooldown
+
+    def use(self, player, inventory):
+
+        self.sounds[1].play()
+
+        if getattr(player, "bow", None):
+            inventory.add_item(player.bow)
+
+        player.bow = self
+
+        inventory.remove_item(self)
+
 
 class Armor(Item):
-    def __init__(self, name, image_path, description, defense=0):
+    def __init__(self, name, image_path, description,
+                 defense=0, slot="chest"):
         super().__init__(name, image_path, description, "armor")
+
         self.defense = defense
+        self.slot = slot  # head, chest, hands, legs
 
     def use(self, player, inventory):
         self.sounds[1].play()
 
-        if getattr(player, "armor", None):
-            inventory.add_item(player.armor)
+        old_max = player.max_health
 
-        player.armor = self
+        if self.slot == "head":
+
+            if player.head_armor:
+                inventory.add_item(player.head_armor)
+
+            player.head_armor = self
+
+        elif self.slot == "chest":
+
+            if player.chest_armor:
+                inventory.add_item(player.chest_armor)
+
+            player.chest_armor = self
+
+        elif self.slot == "hands":
+
+            if player.hand_armor:
+                inventory.add_item(player.hand_armor)
+
+            player.hand_armor = self
+
+        elif self.slot == "legs":
+
+            if player.leg_armor:
+                inventory.add_item(player.leg_armor)
+
+            player.leg_armor = self
+
+        new_max = player.max_health
+
+        player.health += (new_max - old_max)
+
+        if player.health > player.max_health:
+            player.health = player.max_health
+
         inventory.remove_item(self)
 
 
@@ -140,8 +196,43 @@ class InventoryUI:
         self.hover_delay = 750
         self.font = pygame.font.SysFont(None, 22)
 
-        self.weapon_rect = pygame.Rect(self.right_x + 20, self.y + 60, 32, 32)
-        self.armor_rect = pygame.Rect(self.right_x + 20, self.y + 150, 32, 32)
+        self.weapon_rect = pygame.Rect(
+            self.right_x + 20,
+            self.y + 60,
+            32,
+            32
+        )
+
+        self.bow_rect = pygame.Rect(
+            self.right_x + 120,
+            self.y + 60,
+            32,
+            32
+        )
+
+        self.head_rect = pygame.Rect(
+            self.right_x + 20,
+            self.y + 150,
+            32, 32
+        )
+
+        self.chest_rect = pygame.Rect(
+            self.right_x + 20,
+            self.y + 210,
+            32, 32
+        )
+
+        self.hand_rect = pygame.Rect(
+            self.right_x + 120,
+            self.y + 150,
+            32, 32
+        )
+
+        self.leg_rect = pygame.Rect(
+            self.right_x + 120,
+            self.y + 210,
+            32, 32
+        )
 
     # ================= CURSOR =================
     def move_cursor(self, dx, dy):
@@ -153,42 +244,119 @@ class InventoryUI:
 
     # ================= DRAW =================
     def draw_status(self, screen):
-        pygame.draw.rect(screen, (30, 30, 30),
-                         (self.left_x, self.y, self.panel_w, self.grid_height))
+
+        pygame.draw.rect(
+            screen,
+            (30, 30, 30),
+            (self.left_x, self.y, self.panel_w, self.grid_height)
+        )
 
         font = pygame.font.SysFont(None, 28)
 
-        hp_text = font.render(f"HP: {self.player.health}", True, (255, 80, 80))
-        def_text = font.render(f"DEF: {getattr(self.player, 'defense', 0)}", True, (200, 200, 200))
+        hp_text = font.render(
+            f"HP: {self.player.health}/{self.player.max_health}",
+            True,
+            (255, 80, 80)
+        )
+
+        def_text = font.render(
+            f"DEF: {getattr(self.player, 'defense', 0)}",
+            True,
+            (200, 200, 200)
+        )
 
         screen.blit(hp_text, (self.left_x + 20, self.y + 30))
         screen.blit(def_text, (self.left_x + 20, self.y + 70))
 
-    def draw_equipment(self, screen):
-        pygame.draw.rect(screen, (30, 30, 30),
-                         (self.right_x, self.y, self.panel_w, self.grid_height))
-
-        font = pygame.font.SysFont(None, 28)
+        # ================= WEAPON =================
 
         weapon = getattr(self.player, "weapon", None)
-        armor = getattr(self.player, "armor", None)
+        bow = getattr(self.player, "bow", None)
 
-        screen.blit(font.render("Weapon:", True, (255, 255, 255)),
-                    (self.right_x + 20, self.y + 30))
-        screen.blit(font.render("Armor:", True, (255, 255, 255)),
-                    (self.right_x + 20, self.y + 120))
+        screen.blit(
+            font.render("Weapon", True, (255, 255, 255)),
+            (self.left_x + 20, self.y + 130)
+        )
 
-        weapon_pos = (self.right_x + 20, self.y + 60)
-        armor_pos = (self.right_x + 20, self.y + 150)
+        screen.blit(
+            font.render("Bow", True, (255, 255, 255)),
+            (self.left_x + 120, self.y + 130)
+        )
+
+        weapon_pos = (self.left_x + 20, self.y + 170)
+        bow_pos = (self.left_x + 120, self.y + 170)
 
         self.weapon_rect.topleft = weapon_pos
-        self.armor_rect.topleft = armor_pos
+        self.bow_rect.topleft = bow_pos
 
         if weapon and weapon.image:
             screen.blit(weapon.image, weapon_pos)
 
-        if armor and armor.image:
-            screen.blit(armor.image, armor_pos)
+        if bow and bow.image:
+            screen.blit(bow.image, bow_pos)
+
+    def draw_equipment(self, screen):
+
+        pygame.draw.rect(
+            screen,
+            (30, 30, 30),
+            (self.right_x, self.y, self.panel_w, self.grid_height)
+        )
+
+        font = pygame.font.SysFont(None, 28)
+
+        head = getattr(self.player, "head_armor", None)
+        chest = getattr(self.player, "chest_armor", None)
+        hands = getattr(self.player, "hand_armor", None)
+        legs = getattr(self.player, "leg_armor", None)
+
+        # ===== 左列 =====
+
+        screen.blit(
+            font.render("Head", True, (255, 255, 255)),
+            (self.right_x + 20, self.y + 30)
+        )
+
+        screen.blit(
+            font.render("Chest", True, (255, 255, 255)),
+            (self.right_x + 20, self.y + 140)
+        )
+
+        # ===== 右列 =====
+
+        screen.blit(
+            font.render("Hands", True, (255, 255, 255)),
+            (self.right_x + 120, self.y + 30)
+        )
+
+        screen.blit(
+            font.render("Legs", True, (255, 255, 255)),
+            (self.right_x + 120, self.y + 140)
+        )
+
+        head_pos = (self.right_x + 20, self.y + 70)
+        chest_pos = (self.right_x + 20, self.y + 180)
+
+        hand_pos = (self.right_x + 120, self.y + 70)
+        leg_pos = (self.right_x + 120, self.y + 180)
+
+        self.head_rect.topleft = head_pos
+        self.chest_rect.topleft = chest_pos
+
+        self.hand_rect.topleft = hand_pos
+        self.leg_rect.topleft = leg_pos
+
+        if head and head.image:
+            screen.blit(head.image, head_pos)
+
+        if chest and chest.image:
+            screen.blit(chest.image, chest_pos)
+
+        if hands and hands.image:
+            screen.blit(hands.image, hand_pos)
+
+        if legs and legs.image:
+            screen.blit(legs.image, leg_pos)
 
     def draw_grid(self, screen):
         pygame.draw.rect(screen, (20, 20, 20),
@@ -265,8 +433,20 @@ class InventoryUI:
         if self.weapon_rect.collidepoint(mx, my):
             return getattr(self.player, "weapon", None), self.weapon_rect
 
-        if self.armor_rect.collidepoint(mx, my):
-            return getattr(self.player, "armor", None), self.armor_rect
+        if self.bow_rect.collidepoint(mx, my):
+            return getattr(self.player, "bow", None), self.bow_rect
+
+        if self.head_rect.collidepoint(mx, my):
+            return self.player.head_armor, self.head_rect
+
+        if self.chest_rect.collidepoint(mx, my):
+            return self.player.chest_armor, self.chest_rect
+
+        if self.hand_rect.collidepoint(mx, my):
+            return self.player.hand_armor, self.hand_rect
+
+        if self.leg_rect.collidepoint(mx, my):
+            return self.player.leg_armor, self.leg_rect
 
         return None, None
 

@@ -73,16 +73,18 @@ class Player:
         self.vel_accum_x = 0.0
         self.vel_accum_y = 0.0
 
-        self.max_health = 6
-        self.health = 6
-        self.hp = self.health
+        self.base_health = 12
+        self.health = 12
 
         self.dead = False
 
-
-        self.defense = 0
         self.weapon = None
-        self.armor = None
+        self.bow = None
+
+        self.head_armor = None
+        self.chest_armor = None
+        self.hand_armor = None
+        self.leg_armor = None
 
         self.Full_heart = pygame.transform.scale(
             pygame.image.load("HealthBars/Full_heart.png").convert_alpha(), (40, 40)
@@ -264,7 +266,7 @@ class Player:
         heart_y = 20
         spacing = 40
 
-        for i in range(3):
+        for i in range(self.max_health // 2):
             if self.health >= (i + 1) * 2:
                 image = self.Full_heart
             elif self.health == i * 2 + 1:
@@ -286,3 +288,25 @@ class Player:
                 return True
 
         return False
+
+    @property
+    def defense(self):
+        total = 0
+
+        if self.head_armor:
+            total += self.head_armor.defense
+
+        if self.chest_armor:
+            total += self.chest_armor.defense
+
+        if self.hand_armor:
+            total += self.hand_armor.defense
+
+        if self.leg_armor:
+            total += self.leg_armor.defense
+
+        return total
+
+    @property
+    def max_health(self):
+        return self.base_health + self.defense

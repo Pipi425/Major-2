@@ -8,11 +8,12 @@ from Enemy import Enemy
 from Dialogue import DialogueSystem
 from NPCs import NPC
 from Buttons import Button
-from Inventory import Inventory, InventoryUI, Item, Weapon, Armor, Consumable, Misc
+from Inventory import Inventory, InventoryUI, Consumable
 from Animal import Animal
 from Chest import Chest
 from Sprite import SpriteObject
 from SavePoint import SavePoint
+from Boss import Boss
 from SaveSystem import (
     save_game,
     load_game,
@@ -20,7 +21,13 @@ from SaveSystem import (
     respawn_from_save,
     reset_save_data,
     make_sword,
-    make_key
+    make_key,
+    make_axe,
+    make_bow,
+    make_head_1,
+    make_chest_1,
+    make_legs_1,
+    make_hands_1,
 )
 from Hint import HintAnimation
 
@@ -145,7 +152,6 @@ def first_scene(player, game_data):
     pygame.mixer.stop()
 
     arrow_cooldown = 1500
-    melee_cooldown = 750
     last_arrow_time = 0
     last_melee_time = 0
 
@@ -373,7 +379,11 @@ def first_scene(player, game_data):
 
                 if not freeze_world:
 
-                    if event.key == pygame.K_e:
+                    if (
+                            event.key == pygame.K_e
+                            and player.bow
+                            and now - last_arrow_time > player.bow.cooldown
+                    ):
 
                         if now - last_arrow_time >= arrow_cooldown:
 
@@ -397,7 +407,7 @@ def first_scene(player, game_data):
                         if player.weapon is None:
                             continue
 
-                        if now - last_melee_time >= melee_cooldown:
+                        if now - last_melee_time >= player.weapon.cooldown:
 
                             x, y = player.get_center()
 
@@ -448,7 +458,8 @@ def first_scene(player, game_data):
 
                     if enemy.alive and arrow.hit_enemy(enemy.get_rect()):
 
-                        enemy.hit()
+
+                        enemy.hit(1)
 
                         arrows.remove(arrow)
 
@@ -468,7 +479,12 @@ def first_scene(player, game_data):
 
                     if enemy.alive and weapon.hit_enemy(enemy):
 
-                        enemy.hit()
+                        damage = 1
+
+                        if player.weapon:
+                            damage = player.weapon.attack
+
+                        enemy.hit(damage)
 
                         melee_hit.play()
 
@@ -583,8 +599,6 @@ def second_scene(player, game_data):
     pygame.mixer.music.stop()
     pygame.mixer.stop()
 
-    arrow_cooldown = 1500
-    melee_cooldown = 750
     last_arrow_time = 0
     last_melee_time = 0
 
@@ -789,19 +803,35 @@ def second_scene(player, game_data):
                 # ================= COMBAT =================
                 if not freeze_world:
 
-                    if event.key == pygame.K_e and now - last_arrow_time >= arrow_cooldown:
+                    if (
+                            event.key == pygame.K_e
+                            and player.bow
+                            and now - last_arrow_time > player.bow.cooldown
+                    ):
                         x, y = player.get_center()
                         arrows.append(Arrow(x, y, player.direction, arrow_images))
                         arrow1.play()
                         last_arrow_time = now
 
-                    if event.key == pygame.K_q and player.weapon:
-                        if now - last_melee_time >= melee_cooldown:
+                    if event.key == pygame.K_q:
+
+                        if player.weapon is None:
+                            continue
+
+                        if now - last_melee_time >= player.weapon.cooldown:
                             x, y = player.get_center()
+
                             melee_weapons.append(
-                                MeleeWeapon(x, y, player.direction, melee_images)
+                                MeleeWeapon(
+                                    x,
+                                    y,
+                                    player.direction,
+                                    melee_images
+                                )
                             )
+
                             random.choice(melee_sounds).play()
+
                             last_melee_time = now
 
                 # ================= DIALOGUE =================
@@ -904,8 +934,6 @@ def eldermoor_scene(player, game_data):
 
     pygame.mixer.music.stop()
 
-    arrow_cooldown = 1500
-    melee_cooldown = 750
     last_arrow_time = 0
     last_melee_time = 0
 
@@ -1167,19 +1195,35 @@ def eldermoor_scene(player, game_data):
                 # ===== COMBAT =====
                 if not freeze_world:
 
-                    if event.key == pygame.K_e and now - last_arrow_time > arrow_cooldown:
+                    if (
+                            event.key == pygame.K_e
+                            and player.bow
+                            and now - last_arrow_time > player.bow.cooldown
+                    ):
                         x, y = player.get_center()
                         arrows.append(Arrow(x, y, player.direction, arrow_images))
                         arrow1.play()
                         last_arrow_time = now
 
-                    if event.key == pygame.K_q and player.weapon:
-                        if now - last_melee_time > melee_cooldown:
+                    if event.key == pygame.K_q:
+
+                        if player.weapon is None:
+                            continue
+
+                        if now - last_melee_time >= player.weapon.cooldown:
                             x, y = player.get_center()
+
                             melee_weapons.append(
-                                MeleeWeapon(x, y, player.direction, melee_images)
+                                MeleeWeapon(
+                                    x,
+                                    y,
+                                    player.direction,
+                                    melee_images
+                                )
                             )
+
                             random.choice(melee_sounds).play()
+
                             last_melee_time = now
 
         # ================= UPDATE =================
@@ -1251,11 +1295,6 @@ def IroHouse(player, game_data):
 
     pygame.mixer.music.stop()
     pygame.mixer.stop()
-
-    arrow_cooldown = 1500
-    melee_cooldown = 750
-    last_arrow_time = 0
-    last_melee_time = 0
 
     inventory = game_data["inventory"]
     inventory_ui = InventoryUI(inventory, player)
@@ -1950,8 +1989,6 @@ def SnowVillage(player, game_data):
 
     pygame.mixer.music.stop()
 
-    arrow_cooldown = 1500
-    melee_cooldown = 750
     last_arrow_time = 0
     last_melee_time = 0
 
@@ -2134,19 +2171,35 @@ def SnowVillage(player, game_data):
                 # ===== COMBAT =====
                 if not freeze_world:
 
-                    if event.key == pygame.K_e and now - last_arrow_time > arrow_cooldown:
+                    if (
+                            event.key == pygame.K_e
+                            and player.bow
+                            and now - last_arrow_time > player.bow.cooldown
+                    ):
                         x, y = player.get_center()
                         arrows.append(Arrow(x, y, player.direction, arrow_images))
                         arrow1.play()
                         last_arrow_time = now
 
-                    if event.key == pygame.K_q and player.weapon:
-                        if now - last_melee_time > melee_cooldown:
+                    if event.key == pygame.K_q:
+
+                        if player.weapon is None:
+                            continue
+
+                        if now - last_melee_time >= player.weapon.cooldown:
                             x, y = player.get_center()
+
                             melee_weapons.append(
-                                MeleeWeapon(x, y, player.direction, melee_images)
+                                MeleeWeapon(
+                                    x,
+                                    y,
+                                    player.direction,
+                                    melee_images
+                                )
                             )
+
                             random.choice(melee_sounds).play()
+
                             last_melee_time = now
 
         # ================= UPDATE =================
@@ -2214,8 +2267,6 @@ def Maze(player, game_data):
     else:
         player.set_position(1248, 400)
 
-    arrow_cooldown = 1500
-    melee_cooldown = 750
     last_arrow_time = 0
     last_melee_time = 0
 
@@ -2256,6 +2307,26 @@ def Maze(player, game_data):
     chest.set_loot(make_key())
 
     chest.load_state(game_data)
+
+    chest1 = Chest(
+        1168,
+        656,
+        "maze_chest_1"
+    )
+
+    chest1.set_loot(make_axe())
+
+    chest1.load_state(game_data)
+
+    chest2 = Chest(
+        1200,
+        356,
+        "maze_chest_2"
+    )
+
+    chest2.set_loot(make_head_1())
+
+    chest2.load_state(game_data)
 
     hint = HintAnimation(
         x=1002,
@@ -2305,6 +2376,7 @@ def Maze(player, game_data):
     walls = [save_point.get_rect()]
 
     walls.append(chest.hitbox)
+    walls.append(chest1.hitbox)
 
     ice_rects = []
 
@@ -2345,7 +2417,13 @@ def Maze(player, game_data):
         now = pygame.time.get_ticks()
 
         ui_open = inventory_ui.open
-        chest_open = chest.state == "opened"
+        chest_open = (
+                chest.state == "opened"
+                or
+                chest1.state == "opened"
+                or
+                chest2.state == "opened"
+        )
 
         freeze_world = ui_open or chest_open or fading
 
@@ -2380,6 +2458,11 @@ def Maze(player, game_data):
 
                         pygame.mixer.music.fadeout(2000)
 
+                    if chest1.state == "opened":
+                        chest1.close_ui()
+                    if chest2.state == "opened":
+                        chest2.close_ui()
+
                 # ===== SAVE SYSTEM =====
                 if event.key == pygame.K_p and near_save_point:
                     save_game(
@@ -2411,25 +2494,43 @@ def Maze(player, game_data):
                 # ===== COMBAT =====
                 if not freeze_world:
 
-                    if event.key == pygame.K_e and now - last_arrow_time > arrow_cooldown:
+                    if (
+                            event.key == pygame.K_e
+                            and player.bow
+                            and now - last_arrow_time > player.bow.cooldown
+                    ):
                         x, y = player.get_center()
                         arrows.append(Arrow(x, y, player.direction, arrow_images))
                         arrow1.play()
                         last_arrow_time = now
 
-                    if event.key == pygame.K_q and player.weapon:
-                        if now - last_melee_time > melee_cooldown:
+                    if event.key == pygame.K_q:
+
+                        if player.weapon is None:
+                            continue
+
+                        if now - last_melee_time >= player.weapon.cooldown:
                             x, y = player.get_center()
+
                             melee_weapons.append(
-                                MeleeWeapon(x, y, player.direction, melee_images)
+                                MeleeWeapon(
+                                    x,
+                                    y,
+                                    player.direction,
+                                    melee_images
+                                )
                             )
+
                             random.choice(melee_sounds).play()
+
                             last_melee_time = now
 
         # ================= UPDATE =================
         if not freeze_world:
             player.move(keys, walls, ice_rects)
             chest.update(player)
+            chest1.update(player)
+            chest2.update(player)
 
         if chest.give_loot:
 
@@ -2441,6 +2542,28 @@ def Maze(player, game_data):
             )
 
             chest.give_loot = False
+
+        if chest1.give_loot:
+
+            if chest1.loot_item:
+                inventory.add_item(chest1.loot_item)
+
+            game_data["looted_chests"].add(
+                chest1.chest_id
+            )
+
+            chest1.give_loot = False
+
+        if chest2.give_loot:
+
+            if chest2.loot_item:
+                inventory.add_item(chest2.loot_item)
+
+            game_data["looted_chests"].add(
+                chest2.chest_id
+            )
+
+            chest2.give_loot = False
 
         for arrow in arrows[:]:
             if not arrow.update() or arrow.off_screen(1280, 768):
@@ -2458,12 +2581,20 @@ def Maze(player, game_data):
         hint.draw(Screen)
 
         chest.draw(Screen)
+        chest1.draw(Screen)
+        chest2.draw(Screen)
 
         player.draw(Screen)
         player.draw_health_bar(Screen)
 
         if chest.state == "opened":
             chest.draw_loot_ui(Screen)
+
+        if chest1.state == "opened":
+            chest1.draw_loot_ui(Screen)
+
+        if chest2.state == "opened":
+            chest2.draw_loot_ui(Screen)
 
         for arrow in arrows:
             arrow.draw(Screen)
@@ -2500,8 +2631,35 @@ def Maze(player, game_data):
 
             if elapsed >= 2000:
                 pygame.mixer.music.stop()
+                game_data["Maze_Solved"] = True
 
                 return "Maze_Solved"
+
+        if player.health <= 0:
+            player.dead = True
+
+        if player.dead:
+
+            white = pygame.Surface(Screen.get_size())
+            white.fill((255, 255, 255))
+
+            old_screen = Screen.copy()
+
+            for alpha in range(0, 255, 8):
+                Screen.blit(old_screen, (0, 0))
+
+                white.set_alpha(alpha)
+
+                Screen.blit(white, (0, 0))
+
+                pygame.display.update()
+
+                clock.tick(60)
+
+            pygame.mixer.music.stop()
+            pygame.mixer.stop()
+
+            return respawn_from_save(player, game_data)
 
         pygame.display.update()
         clock.tick(60)
@@ -2521,8 +2679,6 @@ def Maze_Solved(player, game_data):
     else:
         player.set_position(1248, 400)
 
-    arrow_cooldown = 1500
-    melee_cooldown = 750
     last_arrow_time = 0
     last_melee_time = 0
 
@@ -2563,6 +2719,26 @@ def Maze_Solved(player, game_data):
     chest.set_loot(make_key())
 
     chest.load_state(game_data)
+
+    chest1 = Chest(
+        1168,
+        656,
+        "maze_chest_1"
+    )
+
+    chest1.set_loot(make_axe())
+
+    chest1.load_state(game_data)
+
+    chest2 = Chest(
+        1200,
+        356,
+        "maze_chest_2"
+    )
+
+    chest2.set_loot(make_bow())
+
+    chest2.load_state(game_data)
 
     # ================= MAP =================
     tiled_map = pytmx.load_pygame(
@@ -2607,6 +2783,8 @@ def Maze_Solved(player, game_data):
     walls = [save_point.get_rect()]
 
     walls.append(chest.hitbox)
+    walls.append(chest1.hitbox)
+    walls.append(chest2.hitbox)
 
     ice_rects = []
 
@@ -2645,7 +2823,13 @@ def Maze_Solved(player, game_data):
         now = pygame.time.get_ticks()
 
         ui_open = inventory_ui.open
-        chest_open = chest.state == "opened"
+        chest_open = (
+                chest.state == "opened"
+                or
+                chest1.state == "opened"
+                or
+                chest2.state == "opened"
+        )
 
         freeze_world = ui_open or chest_open
 
@@ -2672,6 +2856,10 @@ def Maze_Solved(player, game_data):
 
                     if chest.state == "opened":
                         chest.close_ui()
+                    if chest1.state == "opened":
+                        chest1.close_ui()
+                    if chest2.state == "opened":
+                        chest2.close_ui()
 
                 # ===== SAVE SYSTEM =====
                 if event.key == pygame.K_p and near_save_point:
@@ -2704,19 +2892,35 @@ def Maze_Solved(player, game_data):
                 # ===== COMBAT =====
                 if not freeze_world:
 
-                    if event.key == pygame.K_e and now - last_arrow_time > arrow_cooldown:
+                    if (
+                            event.key == pygame.K_e
+                            and player.bow
+                            and now - last_arrow_time > player.bow.cooldown
+                    ):
                         x, y = player.get_center()
                         arrows.append(Arrow(x, y, player.direction, arrow_images))
                         arrow1.play()
                         last_arrow_time = now
 
-                    if event.key == pygame.K_q and player.weapon:
-                        if now - last_melee_time > melee_cooldown:
+                    if event.key == pygame.K_q:
+
+                        if player.weapon is None:
+                            continue
+
+                        if now - last_melee_time >= player.weapon.cooldown:
                             x, y = player.get_center()
+
                             melee_weapons.append(
-                                MeleeWeapon(x, y, player.direction, melee_images)
+                                MeleeWeapon(
+                                    x,
+                                    y,
+                                    player.direction,
+                                    melee_images
+                                )
                             )
+
                             random.choice(melee_sounds).play()
+
                             last_melee_time = now
 
         # ================= UPDATE =================
@@ -2735,6 +2939,29 @@ def Maze_Solved(player, game_data):
 
             chest.give_loot = False
 
+        if chest1.give_loot:
+
+            if chest1.loot_item:
+                inventory.add_item(chest1.loot_item)
+
+            game_data["looted_chests"].add(
+                chest1.chest_id
+            )
+
+            chest1.give_loot = False
+
+        if chest2.give_loot:
+
+            if chest2.loot_item:
+                inventory.add_item(chest2.loot_item)
+
+            game_data["looted_chests"].add(
+                chest2.chest_id
+            )
+
+            chest2.give_loot = False
+
+
         for arrow in arrows[:]:
             if not arrow.update() or arrow.off_screen(1280, 768):
                 arrows.remove(arrow)
@@ -2751,9 +2978,17 @@ def Maze_Solved(player, game_data):
         player.draw_health_bar(Screen)
 
         chest.draw(Screen)
+        chest1.draw(Screen)
+        chest2.draw(Screen)
 
         if chest.state == "opened":
             chest.draw_loot_ui(Screen)
+
+        if chest1.state == "opened":
+            chest1.draw_loot_ui(Screen)
+
+        if chest2.state == "opened":
+            chest2.draw_loot_ui(Screen)
 
         for arrow in arrows:
             arrow.draw(Screen)
@@ -2777,9 +3012,36 @@ def Maze_Solved(player, game_data):
 
         for rect in Change_Scene_1:
             if player.get_rect().colliderect(rect):
-                pygame.mixer.music.stop()
+                if not game_data["Boss1"]:
+                    pygame.mixer.music.stop()
                 game_data["Scene_Back"] = True
                 return "First_Boss"
+
+        if player.health <= 0:
+            player.dead = True
+
+        if player.dead:
+
+            white = pygame.Surface(Screen.get_size())
+            white.fill((255, 255, 255))
+
+            old_screen = Screen.copy()
+
+            for alpha in range(0, 255, 8):
+                Screen.blit(old_screen, (0, 0))
+
+                white.set_alpha(alpha)
+
+                Screen.blit(white, (0, 0))
+
+                pygame.display.update()
+
+                clock.tick(60)
+
+            pygame.mixer.music.stop()
+            pygame.mixer.stop()
+
+            return respawn_from_save(player, game_data)
 
         pygame.display.update()
         clock.tick(60)
@@ -2791,8 +3053,6 @@ def First_Boss(player, game_data):
 
     player.set_position(1248, 384)
 
-    arrow_cooldown = 1500
-    melee_cooldown = 750
     last_arrow_time = 0
     last_melee_time = 0
 
@@ -2815,9 +3075,11 @@ def First_Boss(player, game_data):
     for s in melee_sounds:
         s.set_volume(0.1)
 
-    pygame.mixer.music.load("Musics/FirstBoss.mp3")
-    pygame.mixer.music.set_volume(0.6)
-    pygame.mixer.music.play(-1)
+    if not game_data["Boss1"]:
+        pygame.mixer.music.load("Musics/FirstBoss.mp3")
+        pygame.mixer.music.set_volume(0.6)
+        pygame.mixer.music.play(-1)
+
 
     Screen = pygame.display.set_mode((1280, 768))
     clock = pygame.time.Clock()
@@ -2827,6 +3089,8 @@ def First_Boss(player, game_data):
 
     arrows = []
     melee_weapons = []
+
+    boss = Boss(400, 200)
 
     boss_leave_warning = False
 
@@ -2872,6 +3136,9 @@ def First_Boss(player, game_data):
     ice_rects = []
 
     Change_Scene = []
+
+    fading = False
+    fade_start = 0
 
     save_message_timer = 0
     save_message_text = ""
@@ -2950,24 +3217,72 @@ def First_Boss(player, game_data):
                 # ===== COMBAT =====
                 if not freeze_world:
 
-                    if event.key == pygame.K_e and now - last_arrow_time > arrow_cooldown:
+                    if (
+                            event.key == pygame.K_e
+                            and player.bow
+                            and now - last_arrow_time > player.bow.cooldown
+                    ):
                         x, y = player.get_center()
                         arrows.append(Arrow(x, y, player.direction, arrow_images))
                         arrow1.play()
                         last_arrow_time = now
 
-                    if event.key == pygame.K_q and player.weapon:
-                        if now - last_melee_time > melee_cooldown:
+                    if event.key == pygame.K_q:
+
+                        if player.weapon is None:
+                            continue
+
+                        if now - last_melee_time >= player.weapon.cooldown:
                             x, y = player.get_center()
+
                             melee_weapons.append(
-                                MeleeWeapon(x, y, player.direction, melee_images)
+                                MeleeWeapon(
+                                    x,
+                                    y,
+                                    player.direction,
+                                    melee_images
+                                )
                             )
+
                             random.choice(melee_sounds).play()
+
                             last_melee_time = now
 
         # ================= UPDATE =================
+
+
+        for weapon in melee_weapons:
+
+            if weapon.hit_enemy(boss):
+
+                damage = 1
+
+                if player.weapon:
+                    damage = player.weapon.attack
+
+                boss.hit(damage)
+
+        for arrow in arrows:
+
+            if boss.alive and arrow.hit_enemy(boss.get_rect()):
+                boss.hit(1)
+
+                arrows.remove(arrow)
+
+                arrow_hit.play()
+
+                break
+
+
         if not freeze_world:
             player.move(keys, walls, ice_rects)
+
+            if not game_data["Boss1"]:
+                boss.move(player, walls)
+
+            if boss.alive and not game_data["Boss1"]:
+                if boss.get_rect().colliderect(player.get_hurt_rect()):
+                    player.take_hit()
 
         for arrow in arrows[:]:
             if not arrow.update() or arrow.off_screen(1280, 768):
@@ -2981,6 +3296,18 @@ def First_Boss(player, game_data):
 
         player.draw(Screen)
         player.draw_health_bar(Screen)
+
+        if not game_data["Boss1"]:
+            boss.draw(Screen)
+
+        if boss.dead_done and not fading:
+            fading = True
+            fade_start = pygame.time.get_ticks()
+
+            # 所有声音淡出
+            pygame.mixer.music.fadeout(1500)
+
+            game_data["Boss1"] = True
 
         for arrow in arrows:
             arrow.draw(Screen)
@@ -3003,7 +3330,6 @@ def First_Boss(player, game_data):
                 if not game_data["Boss1"]:
 
                     boss_leave_warning = True
-
                 else:
 
                     pygame.mixer.music.fadeout(1000)
@@ -3050,6 +3376,53 @@ def First_Boss(player, game_data):
                 (panel.centerx - text3.get_width() // 2, panel.y + 145)
             )
 
+        if player.health <= 0:
+            player.dead = True
+
+        if player.dead:
+
+            white = pygame.Surface(Screen.get_size())
+            white.fill((255, 255, 255))
+
+            old_screen = Screen.copy()
+
+            for alpha in range(0, 255, 8):
+                Screen.blit(old_screen, (0, 0))
+
+                white.set_alpha(alpha)
+
+                Screen.blit(white, (0, 0))
+
+                pygame.display.update()
+
+                clock.tick(60)
+
+            pygame.mixer.music.stop()
+            pygame.mixer.stop()
+
+            return respawn_from_save(player, game_data)
+
+        if fading:
+            elapsed = pygame.time.get_ticks() - fade_start
+
+            if elapsed >= 3000:
+                return "Maze_Solved"
+
+            alpha = min(
+                255,
+                int(elapsed / 3000 * 255)
+            )
+
+            fade_surface = pygame.Surface(
+                (Screen.get_width(), Screen.get_height())
+            )
+
+            fade_surface.fill((255, 255, 255))
+
+            fade_surface.set_alpha(alpha)
+
+            Screen.blit(fade_surface, (0, 0))
+
         pygame.display.update()
         clock.tick(60)
     pygame.mixer.music.stop()
@@ -3073,7 +3446,7 @@ game_data = {
     "Boss3": False,
 }
 
-current_scene = "First_Boss"
+current_scene = "SnowVillage"
 
 while True:
 

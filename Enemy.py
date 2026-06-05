@@ -1,5 +1,6 @@
 import pygame
 import math
+from Inventory import Item, Weapon, Armor, Inventory, InventoryUI
 
 class Enemy:
     def __init__(self, x, y):
@@ -176,11 +177,11 @@ class Enemy:
                 self.is_hit = False
                 self.hit_flash_counter = 0
 
-    def hit(self):
+    def hit(self, damage):
         if not self.alive:
             return
 
-        self.hp -= 1
+        self.hp -= damage
 
         self.is_hit = True
         self.hit_timer = 20
@@ -194,3 +195,20 @@ class Enemy:
     def draw(self, screen):
         if self.alive:
             screen.blit(self.get_image(), (self.x, self.y))
+
+            self.draw_health_bar(screen)
+
+    def draw_health_bar(self, screen):
+        if not self.alive:
+            return
+
+        bar_x = self.x + 8
+        bar_y = self.y - 8
+
+        width = 55
+        height = 6
+
+        current_width = int(width * self.hp / 5)
+
+        pygame.draw.rect(screen, (40, 40, 40), (bar_x, bar_y, width, height))
+        pygame.draw.rect(screen, (180, 30, 30), (bar_x, bar_y, current_width, height))
