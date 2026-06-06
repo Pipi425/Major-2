@@ -1,8 +1,10 @@
 from Inventory import Item
 from Inventory import Weapon
+from Inventory import Bow
 from Inventory import Armor
 from Inventory import Consumable
 from Inventory import Misc
+from Inventory import Armor
 from SavePoint import SAVE_POINTS
 
 SAVE_FILE = "save.txt"
@@ -15,8 +17,9 @@ def make_sword():
     return Weapon(
         "Sword",
         "Items/Sword.png",
-        "A sharp blade that deal 1 damage per slash",
-        1
+        "A metal blade that deals 1 damage per slash",
+        1,
+        500
     )
 def make_key():
     return Misc(
@@ -25,12 +28,69 @@ def make_key():
         "The Key to unlock the path to the Storm's Genesis",
     )
 
-# 👉 统一物品生成（关键：以后只改这里）
+def make_axe():
+    return Weapon(
+        "Axe",
+        "Items/Axe.png",
+        "A metal axe that deals 3 damage per slash",
+        25,
+        1250
+    )
+
+def make_bow():
+    return Bow(
+        "Hunter Bow",
+        "Items/Bow.png",
+        "A bow used for ranged attacks",
+        3,
+        1000
+    )
+
+def make_head_1():
+    return Armor(
+        "Soldier's Helmet",
+        "Items/Head1.png",
+        "A helmet that adds 2 defence",
+        2,
+        "head"
+    )
+
+def make_chest_1():
+    return Armor(
+        "Soldier's Chestplate",
+        "Items/Chest1.png",
+        "A chestplate that adds 4 defence",
+        4,
+        "chest"
+    )
+
+def make_hands_1():
+    return Armor(
+        "Soldier's Gauntlets",
+        "Items/Hand1.png",
+        "A gauntlets that adds 2 defence",
+        2,
+        "hands"
+    )
+
+def make_legs_1():
+    return Armor(
+        "Soldier's Leggings",
+        "Items/Foot1.png",
+        "A Leggings that adds 2 defence",
+        2,
+        "legs"
+    )
 def create_item_by_name(name):
     registry = {
         "Sword": make_sword,
         "Key": make_key,
-
+        "Axe": make_axe,
+        "Bow": make_bow,
+        "Soldier's Helmet": make_head_1,
+        "Soldier's Chestplate": make_chest_1,
+        "Soldier's Hands": make_hands_1,
+        "Soldier's Leggings": make_legs_1,
     }
 
     if name in registry:
@@ -92,6 +152,32 @@ def save_game(player, current_scene, game_data, save_point_id=None):
     else:
         file.write(f"weapon={player.weapon.name}\n")
 
+    if player.bow is None:
+        file.write("bow=None\n")
+    else:
+        file.write(f"bow={player.bow.name}\n")
+
+    # armor
+    if player.head_armor is None:
+        file.write("head_armor=None\n")
+    else:
+        file.write(f"head_armor={player.head_armor.name}\n")
+
+    if player.chest_armor is None:
+        file.write("chest_armor=None\n")
+    else:
+        file.write(f"chest_armor={player.chest_armor.name}\n")
+
+    if player.hand_armor is None:
+        file.write("hand_armor=None\n")
+    else:
+        file.write(f"hand_armor={player.hand_armor.name}\n")
+
+    if player.leg_armor is None:
+        file.write("leg_armor=None\n")
+    else:
+        file.write(f"leg_armor={player.leg_armor.name}\n")
+
     # flags
     looted_chests = game_data.get("looted_chests", set())
 
@@ -149,6 +235,21 @@ def apply_save_data(player, game_data, save_data):
     weapon_name = save_data.get("weapon", "None")
     player.weapon = create_item_by_name(weapon_name)
 
+    bow_name = save_data.get("bow", "None")
+    player.bow = create_item_by_name(bow_name)
+
+    head_name = save_data.get("head_armor", "None")
+    player.head_armor = create_item_by_name(head_name)
+
+    chest_name = save_data.get("chest_armor", "None")
+    player.chest_armor = create_item_by_name(chest_name)
+
+    hand_name = save_data.get("hand_armor", "None")
+    player.hand_armor = create_item_by_name(hand_name)
+
+    leg_name = save_data.get("leg_armor", "None")
+    player.leg_armor = create_item_by_name(leg_name)
+
     # flags
     raw_chests = save_data.get("looted_chests", "")
 
@@ -202,7 +303,7 @@ def respawn_from_save(player, game_data):
     player.hp = player.health
     player.dead = False
     player.hit = False
-    player.set_position(297, 389)
+    player.set_position(250, 330)
 
     game_data["loaded_position"] = True
 
@@ -219,9 +320,15 @@ def reset_save_data(player, game_data):
     player.health = player.max_health
     player.hp = player.health
     player.weapon = None
+    player.bow = None
+
+    player.head_armor = None
+    player.chest_armor = None
+    player.hand_armor = None
+    player.leg_armor = None
     player.dead = False
     player.hit = False
-    player.set_position(297, 389)
+    player.set_position(250, 330)
 
     game_data["loaded_position"] = True
     game_data["looted_chests"] = set()

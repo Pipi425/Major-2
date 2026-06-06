@@ -44,25 +44,25 @@ def load_skeleton_images(path, size):
     return images
 
 
-def load_bow_images(path, size):
+def load_dagger_images(path, size):
     sheet = pygame.image.load(path).convert_alpha()
     images = {}
 
-    frame_width = sheet.get_width() // 24
+    frame_width = sheet.get_width() // 32
     frame_height = sheet.get_height()
 
     starts = {
         "down": 0,
-        "up": 6,
-        "right": 12,
-        "left": 18
+        "up": 8,
+        "right": 16,
+        "left": 24
     }
 
     for direction in DIRECTIONS:
         images[direction] = []
         start = starts[direction]
 
-        for i in range(6):
+        for i in range(8):
             image = sheet.subsurface(
                 pygame.Rect((start + i) * frame_width, 0, frame_width, frame_height)
             ).copy()
@@ -73,103 +73,11 @@ def load_bow_images(path, size):
     return images
 
 
-def load_arrow_images(path):
-    image = pygame.image.load(path).convert_alpha()
-    image = pygame.transform.scale(image, (18, 45))
-
-    images = {
-        "down": image,
-        "up": pygame.transform.rotate(image, 180),
-        "right": pygame.transform.rotate(image, 90),
-        "left": pygame.transform.rotate(image, -90)
-    }
-
-    return images
-
-
-class SkeletonArrow:
-    def __init__(self, x, y, direction, images):
-        self.direction = direction
-        self.image = images[direction]
-
-        self.x = x - self.image.get_width() // 2
-        self.y = y - self.image.get_height() // 2
-
-        self.speed = 6
-        self.damage = 3
-        self.life = 120
-        self.active = True
-
-    def get_rect(self):
-        return pygame.Rect(
-            self.x + 4,
-            self.y + 4,
-            self.image.get_width() - 8,
-            self.image.get_height() - 8
-        )
-
-    def move(self, player, walls):
-        if not self.active:
-            return
-
-        if self.direction == "down":
-            self.y += self.speed
-
-        elif self.direction == "up":
-            self.y -= self.speed
-
-        elif self.direction == "left":
-            self.x -= self.speed
-
-        elif self.direction == "right":
-            self.x += self.speed
-
-        self.life -= 1
-
-        if self.life <= 0:
-            self.active = False
-            return
-
-        arrow_rect = self.get_rect()
-
-        for wall in walls:
-            if arrow_rect.colliderect(wall):
-                self.active = False
-                return
-
-        if arrow_rect.colliderect(player.get_hurt_rect()):
-            self.hit_player(player)
-            self.active = False
-
-    def hit_player(self, player):
-        if player.hit:
-            return
-
-        player.health -= self.damage
-        player.hp = player.health
-
-        player.hit = True
-        player.hit_timer = 60
-        player.hit_flash_counter = 0
-
-        if player.health <= 0:
-            player.health = 0
-            player.hp = 0
-            player.dead = True
-
-        if len(player.hurt_sound) > 0:
-            player.hurt_sound[0].play()
-
-    def draw(self, screen):
-        if self.active:
-            screen.blit(self.image, (self.x, self.y))
-
-
-class SkeletonSoldier:
+class SkeletonBoxer:
     def __init__(self, x, y):
-        self.images = load_skeleton_images("SkeletonSoldier/Skeleton_5-Sheet-NoOutline.png", (70, 70))
-        self.bow_images = load_bow_images("SkeletonSoldier/Bow-Sheet-NoOutline.png", (85, 85))
-        self.arrow_images = load_arrow_images("SkeletonSoldier/Arrow-NoOutline.png")
+        self.images = load_skeleton_images("SkeletonBoxer/Skeleton_6-Sheet-NoOutline.png", (70, 70))
+        self.right_dagger_images = load_dagger_images("SkeletonBoxer/RightDagger-Sheet-NoOutline.png", (90, 90))
+        self.left_dagger_images = load_dagger_images("SkeletonBoxer/LeftDagger-Sheet-NoOutline.png", (90, 90))
 
         self.x = x
         self.y = y
@@ -180,25 +88,24 @@ class SkeletonSoldier:
         self.frame = 0
         self.frame_count = 0
 
-        self.bow_frame = 0
-        self.bow_frame_count = 0
+        self.dagger_frame = 0
+        self.dagger_frame_count = 0
 
-        self.hp = 8
-        self.max_hp = 8
+        self.hp = 10
+        self.max_hp = 10
 
         self.alive = True
         self.dead_done = False
 
-        self.speed = 1.1
-        self.detect_range = 520
-        self.attack_range = 360
-        self.safe_range = 170
+        self.speed = 1.35
+        self.detect_range = 360
+        self.attack_range = 65
 
         self.attack_cooldown = 0
-        self.shoot_done = False
+        self.attack_done = False
         self.hurt_time = 0
 
-        self.arrows = []
+        self.damage = 1
 
     def set_state(self, state):
         if self.state == state:
@@ -209,9 +116,9 @@ class SkeletonSoldier:
         self.frame_count = 0
 
         if state == "attack":
-            self.bow_frame = 0
-            self.bow_frame_count = 0
-            self.shoot_done = False
+            self.dagger_frame = 0
+            self.dagger_frame_count = 0
+            self.attack_done = False
 
     def get_images(self):
         if self.state == "walk":
@@ -241,21 +148,21 @@ class SkeletonSoldier:
         self.frame = 0
         return True
 
-    def play_bow_animation(self, speed):
-        images = self.bow_images[self.direction]
+    def play_dagger_animation(self, speed):
+        images = self.right_dagger_images[self.direction]
 
-        self.bow_frame_count += 1
+        self.dagger_frame_count += 1
 
-        if self.bow_frame_count < speed:
+        if self.dagger_frame_count < speed:
             return False
 
-        self.bow_frame_count = 0
-        self.bow_frame += 1
+        self.dagger_frame_count = 0
+        self.dagger_frame += 1
 
-        if self.bow_frame < len(images):
+        if self.dagger_frame < len(images):
             return False
 
-        self.bow_frame = len(images) - 1
+        self.dagger_frame = len(images) - 1
         return True
 
     def get_player_distance(self, player):
@@ -290,19 +197,39 @@ class SkeletonSoldier:
     def get_hurt_rect(self):
         return pygame.Rect(self.x + 18, self.y + 12, 34, 54)
 
-    def get_shoot_position(self):
+    def get_attack_rect(self):
         skeleton_rect = self.get_rect()
 
         if self.direction == "down":
-            return skeleton_rect.centerx, skeleton_rect.bottom + 10
+            return pygame.Rect(
+                skeleton_rect.centerx - 24,
+                skeleton_rect.bottom,
+                48,
+                45
+            )
 
         if self.direction == "up":
-            return skeleton_rect.centerx, skeleton_rect.top - 10
+            return pygame.Rect(
+                skeleton_rect.centerx - 24,
+                skeleton_rect.top - 45,
+                48,
+                45
+            )
 
         if self.direction == "left":
-            return skeleton_rect.left - 10, skeleton_rect.centery
+            return pygame.Rect(
+                skeleton_rect.left - 45,
+                skeleton_rect.centery - 24,
+                45,
+                48
+            )
 
-        return skeleton_rect.right + 10, skeleton_rect.centery
+        return pygame.Rect(
+            skeleton_rect.right,
+            skeleton_rect.centery - 24,
+            45,
+            48
+        )
 
     def move_and_check_wall(self, move_x, move_y, walls):
         old_x = self.x
@@ -331,40 +258,43 @@ class SkeletonSoldier:
         self.move_and_check_wall(move_x, move_y, walls)
         self.play_animation(8)
 
-    def walk_away_from_player(self, dx, dy, distance, walls):
-        self.set_state("walk")
-
-        move_x = -dx / distance * self.speed
-        move_y = -dy / distance * self.speed
-
-        self.move_and_check_wall(move_x, move_y, walls)
-        self.play_animation(8)
-
     def start_attack(self):
         self.set_state("attack")
-        self.attack_cooldown = 100
-
-    def shoot_arrow(self):
-        if self.shoot_done:
-            return
-
-        if self.bow_frame < 4:
-            return
-
-        x, y = self.get_shoot_position()
-        self.arrows.append(SkeletonArrow(x, y, self.direction, self.arrow_images))
-        self.shoot_done = True
+        self.attack_cooldown = 70
 
     def count_cooldown(self):
         if self.attack_cooldown > 0:
             self.attack_cooldown -= 1
 
-    def update_arrows(self, player, walls):
-        for arrow in self.arrows[:]:
-            arrow.move(player, walls)
+    def hit_player(self, player):
+        if self.attack_done:
+            return
 
-            if not arrow.active:
-                self.arrows.remove(arrow)
+        if self.dagger_frame < 4:
+            return
+
+        attack_rect = self.get_attack_rect()
+
+        if attack_rect.colliderect(player.get_hurt_rect()):
+            if player.hit:
+                return
+
+            player.health -= self.damage
+            player.hp = player.health
+
+            player.hit = True
+            player.hit_timer = 60
+            player.hit_flash_counter = 0
+
+            if player.health <= 0:
+                player.health = 0
+                player.hp = 0
+                player.dead = True
+
+            if len(player.hurt_sound) > 0:
+                player.hurt_sound[0].play()
+
+            self.attack_done = True
 
     def hit(self):
         if not self.alive:
@@ -382,8 +312,6 @@ class SkeletonSoldier:
         self.hurt_time = 18
 
     def move(self, player, walls):
-        self.update_arrows(player, walls)
-
         if not self.alive:
             return
 
@@ -403,22 +331,18 @@ class SkeletonSoldier:
 
         if self.state == "attack":
             self.play_animation(8)
-            self.shoot_arrow()
+            self.hit_player(player)
 
-            if self.play_bow_animation(5):
+            if self.play_dagger_animation(4):
                 self.set_state("idle")
 
-            return
-
-        if distance < self.safe_range:
-            self.walk_away_from_player(dx, dy, distance, walls)
             return
 
         if distance < self.attack_range and self.attack_cooldown <= 0:
             self.start_attack()
             return
 
-        if distance < self.detect_range and distance > self.attack_range - 70:
+        if distance < self.detect_range:
             self.walk_to_player(dx, dy, distance, walls)
             return
 
@@ -441,9 +365,6 @@ class SkeletonSoldier:
         pygame.draw.rect(screen, (180, 30, 30), (bar_x, bar_y, current_width, height))
 
     def draw(self, screen):
-        for arrow in self.arrows:
-            arrow.draw(screen)
-
         if not self.alive:
             return
 
@@ -453,11 +374,13 @@ class SkeletonSoldier:
         screen.blit(image, (self.x, self.y))
 
         if self.state == "attack":
-            bow = self.bow_images[self.direction][self.bow_frame]
+            right_dagger = self.right_dagger_images[self.direction][self.dagger_frame]
+            left_dagger = self.left_dagger_images[self.direction][self.dagger_frame]
 
-            bow_x = self.get_rect().centerx - bow.get_width() // 2
-            bow_y = self.get_rect().centery - bow.get_height() // 2
+            dagger_x = self.get_rect().centerx - right_dagger.get_width() // 2
+            dagger_y = self.get_rect().centery - right_dagger.get_height() // 2
 
-            screen.blit(bow, (bow_x, bow_y))
+            screen.blit(right_dagger, (dagger_x, dagger_y))
+            screen.blit(left_dagger, (dagger_x, dagger_y))
 
         self.draw_health_bar(screen)

@@ -58,7 +58,7 @@ SAVE_POINTS = {
         "spawn_y": 720
     },
     "MazeSolved_save": {
-        "scene": "MazeSolved",
+        "scene": "Maze_Solved",
         "x": 83,
         "y": 592,
         "spawn_x": 134,
