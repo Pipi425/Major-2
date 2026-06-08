@@ -14,6 +14,9 @@ from Chest import Chest
 from Sprite import SpriteObject
 from SavePoint import SavePoint
 from Boss import Boss
+from SkeletonSoldier import SkeletonSoldier
+from SkeletonBoxer import SkeletonBoxer
+from SkeletonWizard import SkeletonWizard
 from SaveSystem import (
     save_game,
     load_game,
@@ -2791,6 +2794,18 @@ def Maze_Solved(player, game_data):
     arrows = []
     melee_weapons = []
 
+    skeletons = []
+
+    skeletons.append(SkeletonSoldier(544, 192))
+    skeletons.append(SkeletonBoxer(688, 192))
+    skeletons.append(SkeletonSoldier(832, 192))
+    skeletons.append(SkeletonWizard(544, 416))
+    skeletons.append(SkeletonWizard(688, 416))
+    skeletons.append(SkeletonWizard(832, 416))
+    skeletons.append(SkeletonSoldier(544, 640))
+    skeletons.append(SkeletonBoxer(688, 640))
+    skeletons.append(SkeletonSoldier(832, 640))
+
     chest = Chest(
         1008,
         176,
@@ -3046,6 +3061,46 @@ def Maze_Solved(player, game_data):
             chest3.update(player)
             chest4.update(player)
 
+            for sk in skeletons:
+                sk.move(player, walls)
+
+                for weapon in melee_weapons:
+
+                    for skeleton in skeletons:
+                        for arrow in skeleton.arrows[:]:
+
+                            if weapon.attack_rect.colliderect(arrow.get_rect()):
+                                arrow.active = False
+                                skeleton.arrows.remove(arrow)
+
+                    if weapon.hit_enemy(sk) and sk.alive:
+
+                        damage = 0
+
+                        if player.weapon:
+                            damage = player.weapon.attack
+
+                        sk.hit(damage)
+
+                for arrow in arrows:
+
+                    if sk.alive and arrow.hit_enemy(sk.get_rect()):
+
+                        damage = 0
+
+                        if player.bow:
+                            damage = player.bow.damage
+
+                        sk.hit(damage)
+
+                        arrows.remove(arrow)
+
+                        arrow_hit.play()
+
+                        break
+
+
+
         if chest.give_loot:
 
             if chest.loot_item:
@@ -3113,6 +3168,9 @@ def Maze_Solved(player, game_data):
         Screen.blit(SF, (0, 0))
 
         save_point.draw(Screen, near_save_point)
+
+        for sk in skeletons:
+            sk.draw(Screen)
 
         player.draw(Screen)
 

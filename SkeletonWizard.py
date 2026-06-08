@@ -197,8 +197,8 @@ class SkeletonWizard:
         self.book_frame = 0
         self.book_frame_count = 0
 
-        self.hp = 9
-        self.max_hp = 9
+        self.hp = 8
+        self.max_hp = 8
 
         self.alive = True
         self.dead_done = False
@@ -385,11 +385,11 @@ class SkeletonWizard:
             if not projectile.active:
                 self.projectiles.remove(projectile)
 
-    def hit(self):
+    def hit(self, damage):
         if not self.alive:
             return
 
-        self.hp -= 1
+        self.hp -= damage
 
         if self.hp <= 0:
             self.hp = 0

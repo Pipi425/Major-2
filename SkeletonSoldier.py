@@ -96,7 +96,7 @@ class SkeletonArrow:
         self.y = y - self.image.get_height() // 2
 
         self.speed = 6
-        self.damage = 3
+        self.damage = 1
         self.life = 120
         self.active = True
 
@@ -132,10 +132,10 @@ class SkeletonArrow:
 
         arrow_rect = self.get_rect()
 
-        for wall in walls:
-            if arrow_rect.colliderect(wall):
-                self.active = False
-                return
+        if (self.x < 0 or self.x > 1280 or
+                self.y < 0 or self.y > 768):
+            self.active = False
+            return
 
         if arrow_rect.colliderect(player.get_hurt_rect()):
             self.hit_player(player)
@@ -366,11 +366,11 @@ class SkeletonSoldier:
             if not arrow.active:
                 self.arrows.remove(arrow)
 
-    def hit(self):
+    def hit(self, damage):
         if not self.alive:
             return
 
-        self.hp -= 1
+        self.hp -= damage
 
         if self.hp <= 0:
             self.hp = 0

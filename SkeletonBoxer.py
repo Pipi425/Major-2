@@ -296,11 +296,11 @@ class SkeletonBoxer:
 
             self.attack_done = True
 
-    def hit(self):
+    def hit(self, damage):
         if not self.alive:
             return
 
-        self.hp -= 1
+        self.hp -= damage
 
         if self.hp <= 0:
             self.hp = 0
