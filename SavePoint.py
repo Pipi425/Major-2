@@ -63,6 +63,13 @@ SAVE_POINTS = {
         "y": 592,
         "spawn_x": 134,
         "spawn_y": 540
+    },
+    "DesertVillage_save": {
+        "scene": "DesertVillage",
+        "x": 100,
+        "y": 290,
+        "spawn_x": -40,
+        "spawn_y": 362
     }
 
 }

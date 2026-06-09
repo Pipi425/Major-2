@@ -31,6 +31,11 @@ from SaveSystem import (
     make_chest_1,
     make_legs_1,
     make_hands_1,
+    make_head_2,
+    make_chest_2,
+    make_legs_2,
+    make_hands_2,
+    make_sword_1
 )
 from Hint import HintAnimation
 
@@ -405,7 +410,7 @@ def first_scene(player, game_data):
                             arrow1.play()
 
                             last_arrow_time = now
-                            player.bow_cooldown = player.bow.cooldown
+                            player.bow_cooldown = player.bow.cooldown * 0.06
                             player.max_bow_cooldown = player.bow.cooldown
 
                     if event.key == pygame.K_q:
@@ -825,7 +830,7 @@ def second_scene(player, game_data):
                         arrows.append(Arrow(x, y, player.direction, arrow_images))
                         arrow1.play()
                         last_arrow_time = now
-                        player.bow_cooldown = player.bow.cooldown
+                        player.bow_cooldown = player.bow.cooldown * 0.06
                         player.max_bow_cooldown = player.bow.cooldown
 
                     if event.key == pygame.K_q:
@@ -1226,7 +1231,7 @@ def eldermoor_scene(player, game_data):
                         arrows.append(Arrow(x, y, player.direction, arrow_images))
                         arrow1.play()
                         last_arrow_time = now
-                        player.bow_cooldown = player.bow.cooldown
+                        player.bow_cooldown = player.bow.cooldown * 0.06
                         player.max_bow_cooldown = player.bow.cooldown
 
                     if event.key == pygame.K_q:
@@ -2004,6 +2009,11 @@ def IroHome(player, game_data):
                 pygame.mixer.music.fadeout(1000)
                 return "SnowVillage"
 
+        for rect in Change_Scene_2:
+            if player.get_rect().colliderect(rect):
+                pygame.mixer.music.fadeout(1000)
+                return "DesertVillage"
+
         player.draw_health_bar(Screen)
         player.draw_stamina_bar(Screen)
         if player.can_attack:
@@ -2306,6 +2316,15 @@ def Maze(player, game_data):
     arrows = []
     melee_weapons = []
 
+    skeletons = []
+
+    skeletons.append(SkeletonSoldier(544, 192))
+    skeletons.append(SkeletonSoldier(832, 192))
+    skeletons.append(SkeletonSoldier(544, 416))
+    skeletons.append(SkeletonSoldier(832, 416))
+    skeletons.append(SkeletonSoldier(544, 640))
+    skeletons.append(SkeletonSoldier(832, 640))
+
     chest = Chest(
         1008,
         176,
@@ -2542,7 +2561,7 @@ def Maze(player, game_data):
                         arrows.append(Arrow(x, y, player.direction, arrow_images))
                         arrow1.play()
                         last_arrow_time = now
-                        player.bow_cooldown = player.bow.cooldown
+                        player.bow_cooldown = player.bow.cooldown * 0.06
                         player.max_bow_cooldown = player.bow.cooldown
 
                     if event.key == pygame.K_q:
@@ -2574,6 +2593,44 @@ def Maze(player, game_data):
             chest2.update(player)
             chest3.update(player)
             chest4.update(player)
+
+            for sk in skeletons:
+                sk.move(player, walls)
+
+                for weapon in melee_weapons:
+
+                    for skeleton in skeletons:
+                        for arrow in skeleton.arrows[:]:
+
+                            if weapon.attack_rect.colliderect(arrow.get_rect()):
+                                arrow.active = False
+                                skeleton.arrows.remove(arrow)
+
+                    if weapon.hit_enemy(sk) and sk.alive:
+
+                        damage = 0
+
+                        if player.weapon:
+                            damage = player.weapon.attack
+
+                        sk.hit(damage)
+
+                for arrow in arrows:
+
+                    if sk.alive and arrow.hit_enemy(sk.get_rect()):
+
+                        damage = 0
+
+                        if player.bow:
+                            damage = player.bow.damage
+
+                        sk.hit(damage)
+
+                        arrows.remove(arrow)
+
+                        arrow_hit.play()
+
+                        break
 
         if chest.give_loot:
 
@@ -2650,6 +2707,9 @@ def Maze(player, game_data):
         chest2.draw(Screen)
         chest3.draw(Screen)
         chest4.draw(Screen)
+
+        for sk in skeletons:
+            sk.draw(Screen)
 
         player.draw(Screen)
 
@@ -2797,13 +2857,10 @@ def Maze_Solved(player, game_data):
     skeletons = []
 
     skeletons.append(SkeletonSoldier(544, 192))
-    skeletons.append(SkeletonBoxer(688, 192))
     skeletons.append(SkeletonSoldier(832, 192))
-    skeletons.append(SkeletonWizard(544, 416))
-    skeletons.append(SkeletonWizard(688, 416))
-    skeletons.append(SkeletonWizard(832, 416))
+    skeletons.append(SkeletonSoldier(544, 416))
+    skeletons.append(SkeletonSoldier(832, 416))
     skeletons.append(SkeletonSoldier(544, 640))
-    skeletons.append(SkeletonBoxer(688, 640))
     skeletons.append(SkeletonSoldier(832, 640))
 
     chest = Chest(
@@ -3028,7 +3085,7 @@ def Maze_Solved(player, game_data):
                         arrows.append(Arrow(x, y, player.direction, arrow_images))
                         arrow1.play()
                         last_arrow_time = now
-                        player.bow_cooldown = player.bow.cooldown
+                        player.bow_cooldown = player.bow.cooldown * 0.06
                         player.max_bow_cooldown = player.bow.cooldown
 
                     if event.key == pygame.K_q:
@@ -3460,7 +3517,7 @@ def First_Boss(player, game_data):
                         arrows.append(Arrow(x, y, player.direction, arrow_images))
                         arrow1.play()
                         last_arrow_time = now
-                        player.bow_cooldown = player.bow.cooldown
+                        player.bow_cooldown = player.bow.cooldown * 0.06
                         player.max_bow_cooldown = player.bow.cooldown
 
                     if event.key == pygame.K_q:
@@ -3696,6 +3753,797 @@ def First_Boss(player, game_data):
     pygame.mixer.music.stop()
     pygame.mixer.stop()
 
+def DesertVillage(player, game_data):
+    # ================= INIT =================
+    player.can_attack = False
+    if game_data.get("Scene_Back"):
+        player.set_position(778, -40)
+        game_data["Scene_Back"] = False
+    else:
+        player.set_position(-40, 362)
+
+    pygame.mixer.music.stop()
+
+    inventory = game_data["inventory"]
+    inventory_ui = InventoryUI(inventory, player)
+
+    click = pygame.mixer.Sound("Musics/Hover2.mp3")
+    click.set_volume(0.2)
+
+    arrow1 = pygame.mixer.Sound("SoundEffects/Arrow1.mp3")
+    arrow1.set_volume(0.05)
+
+    arrow_hit = pygame.mixer.Sound("SoundEffects/Arrow_hit.mp3")
+    arrow_hit.set_volume(0.05)
+
+    melee_sounds = [
+        pygame.mixer.Sound(f"SoundEffects/Melee{i}.mp3")
+        for i in range(1, 4)
+    ]
+    for s in melee_sounds:
+        s.set_volume(0.1)
+
+    pygame.mixer.music.load("Musics/DesertVillage.mp3")
+    pygame.mixer.music.set_volume(0.6)
+    pygame.mixer.music.play(-1, fade_ms=2000)
+
+    Screen = pygame.display.set_mode((1280, 768))
+    clock = pygame.time.Clock()
+
+    arrow_images = load_arrow_images()
+    melee_images = load_melee_images()
+
+    arrows = []
+    melee_weapons = []
+
+    # ================= MAP =================
+    tiled_map = pytmx.load_pygame(
+        "Maps/Second Boss/DesertVillage.tmx",
+        pixelalpha=True
+    )
+
+    SCALE = 2
+
+    b1 = pygame.Surface(
+        (
+            tiled_map.width * tiled_map.tilewidth * SCALE,
+            tiled_map.height * tiled_map.tileheight * SCALE
+        )
+    ).convert_alpha()
+
+    def draw_map(surface):
+        for layer in tiled_map.visible_layers:
+            if isinstance(layer, pytmx.TiledTileLayer):
+                for x, y, gid in layer:
+                    tile = tiled_map.get_tile_image_by_gid(gid)
+                    if tile:
+                        tile = pygame.transform.scale(
+                            tile,
+                            (
+                                tiled_map.tilewidth * SCALE,
+                                tiled_map.tileheight * SCALE
+                            )
+                        )
+                        surface.blit(tile, (
+                            x * tiled_map.tilewidth * SCALE,
+                            y * tiled_map.tileheight * SCALE
+                        ))
+        return surface
+
+    SF = draw_map(b1)
+
+    # ================= SAVE POINT =================
+    save_point = SavePoint("DesertVillage_save")
+
+    chest = Chest(
+        96,
+        544,
+        "desert_chest_1"
+    )
+
+    chest.set_loot(make_bow())
+    chest.load_state(game_data)
+
+    # ================= UI =================
+    MenuButton = Button(
+        "Graphics/MenuButton.png",
+        "Graphics/Hovered_MenuButton.png",
+        (20, 680),
+        size=(164, 66)
+    )
+
+    regular_buttons = pygame.sprite.Group(MenuButton)
+
+    # ================= COLLISION =================
+    walls = [
+        save_point.get_rect(),
+        chest.hitbox
+    ]
+
+    Spikes = []
+
+    ice_rects = []
+
+    Change_Scene = []
+
+    Change_Scene_1 = []
+
+    save_message_timer = 0
+    save_message_text = ""
+
+    for obj in tiled_map.get_layer_by_name("collision"):
+        walls.append(
+            pygame.Rect(
+                obj.x * SCALE,
+                obj.y * SCALE,
+                obj.width * SCALE,
+                obj.height * SCALE
+            )
+        )
+
+    for obj in tiled_map.get_layer_by_name("Spike"):
+        Spikes.append(
+            pygame.Rect(
+                obj.x * SCALE,
+                obj.y * SCALE,
+                obj.width * SCALE,
+                obj.height * SCALE
+            )
+        )
+
+    for obj in tiled_map.get_layer_by_name("Change_Scene"):
+        Change_Scene.append(pygame.Rect(obj.x * SCALE, obj.y * SCALE, obj.width * SCALE, obj.height * SCALE))
+
+    for obj in tiled_map.get_layer_by_name("Change_Scene_1"):
+        Change_Scene_1.append(pygame.Rect(obj.x * SCALE, obj.y * SCALE, obj.width * SCALE, obj.height * SCALE))
+
+    # ================= GAME LOOP =================
+    Game_active = True
+
+    while Game_active:
+
+        # ================= STATE =================
+        now = pygame.time.get_ticks()
+
+        ui_open = inventory_ui.open
+        freeze_world = ui_open
+
+        keys = pygame.key.get_pressed()
+
+        near_save_point = save_point.is_near(player)
+
+        # ================= EVENTS =================
+        for event in pygame.event.get():
+
+            mouse_pos = pygame.mouse.get_pos()
+
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+
+            # ================= UI BUTTON =================
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if MenuButton.is_clicked(mouse_pos):
+                    click.play()
+                    return "menu"
+
+            # ================= KEY INPUT =================
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_f:
+                    if chest.state == "opened":
+                        chest.close_ui()
+
+                if event.key == pygame.K_f and inventory_ui.open:
+                    inventory_ui.handle_use(player, game_data["inventory"])
+
+                # ===== SAVE SYSTEM =====
+                if event.key == pygame.K_p and near_save_point:
+                    save_game(
+                        player,
+                        "DesertVillage",
+                        game_data,
+                        save_point.save_point_id
+                    )
+                    save_message_timer = 120
+                    save_message_text = "Progress saved."
+
+                if event.key == pygame.K_r and near_save_point:
+                    return reset_save_data(player, game_data)
+
+                # ===== INVENTORY =====
+                if event.key == pygame.K_i:
+                    inventory_ui.open = not inventory_ui.open
+
+                if inventory_ui.open:
+                    if event.key == pygame.K_LEFT:
+                        inventory_ui.move_cursor(-1, 0)
+                    if event.key == pygame.K_RIGHT:
+                        inventory_ui.move_cursor(1, 0)
+                    if event.key == pygame.K_UP:
+                        inventory_ui.move_cursor(0, -1)
+                    if event.key == pygame.K_DOWN:
+                        inventory_ui.move_cursor(0, 1)
+
+        # ================= UPDATE =================
+        if not freeze_world:
+            player.move(keys, walls, ice_rects)
+
+            chest.update(player)
+
+            for rect in Spikes:
+                if player.get_rect().colliderect(rect):
+                    player.take_hit(1)
+
+        if chest.give_loot:
+
+            if chest.loot_item:
+                inventory.add_item(chest.loot_item)
+
+            game_data["looted_chests"].add(
+                chest.chest_id
+            )
+
+            chest.give_loot = False
+
+        for arrow in arrows[:]:
+            if not arrow.update() or arrow.off_screen(1280, 768):
+                arrows.remove(arrow)
+
+        for weapon in melee_weapons[:]:
+            if not weapon.update():
+                melee_weapons.remove(weapon)
+
+        Screen.blit(SF, (0, 0))
+
+        chest.draw(Screen)
+
+        save_point.draw(Screen, near_save_point)
+
+        player.draw(Screen)
+
+        if chest.state == "opened":
+            chest.draw_loot_ui(Screen)
+
+        for arrow in arrows:
+            arrow.draw(Screen)
+
+        for weapon in melee_weapons:
+            weapon.draw(Screen)
+
+        if inventory_ui.open:
+            inventory_ui.draw(Screen)
+
+        regular_buttons.draw(Screen)
+
+        if save_message_timer > 0:
+            draw_save_message(Screen, save_message_text)
+
+            save_message_timer -= 1
+
+        for rect in Change_Scene:
+            if player.get_rect().colliderect(rect):
+                    return "DesertMaze"
+
+        for rect in Change_Scene_1:
+            if player.get_rect().colliderect(rect):
+                pygame.mixer.music.fadeout(1000)
+                game_data["Scene_Back"] = True
+                return "IroHome"
+
+        player.draw_health_bar(Screen)
+        player.draw_stamina_bar(Screen)
+        if player.can_attack:
+            player.draw_weapon_cooldowns(Screen)
+
+        if player.dead:
+
+            white = pygame.Surface(Screen.get_size())
+            white.fill((255, 255, 255))
+
+            old_screen = Screen.copy()
+
+            for alpha in range(0, 255, 8):
+                Screen.blit(old_screen, (0, 0))
+
+                white.set_alpha(alpha)
+
+                Screen.blit(white, (0, 0))
+
+                pygame.display.update()
+
+                clock.tick(60)
+
+            pygame.mixer.music.stop()
+            pygame.mixer.stop()
+
+            return respawn_from_save(player, game_data)
+
+
+        pygame.display.update()
+        clock.tick(60)
+
+    pygame.mixer.music.stop()
+    pygame.mixer.stop()
+
+def DesertMaze(player, game_data):
+    # ================= INIT =================
+    player.can_attack = True
+
+    if game_data["Scene_Back"]:
+        player.set_position(992, -32)
+        game_data["Scene_Back"] = False
+    else:
+        player.set_position(778, 660)
+
+    last_arrow_time = 0
+    last_melee_time = 0
+
+    inventory = game_data["inventory"]
+    inventory_ui = InventoryUI(inventory, player)
+
+    click = pygame.mixer.Sound("Musics/Hover2.mp3")
+    click.set_volume(0.2)
+
+    arrow1 = pygame.mixer.Sound("SoundEffects/Arrow1.mp3")
+    arrow1.set_volume(0.05)
+
+    arrow_hit = pygame.mixer.Sound("SoundEffects/Arrow_hit.mp3")
+    arrow_hit.set_volume(0.05)
+
+    melee_sounds = [
+        pygame.mixer.Sound(f"SoundEffects/Melee{i}.mp3")
+        for i in range(1, 4)
+    ]
+    for s in melee_sounds:
+        s.set_volume(0.1)
+
+    Screen = pygame.display.set_mode((1280, 768))
+    clock = pygame.time.Clock()
+
+    arrow_images = load_arrow_images()
+    melee_images = load_melee_images()
+
+    arrows = []
+    melee_weapons = []
+
+    skeletons = []
+
+    """skeletons.append(SkeletonSoldier(544, 192))
+    skeletons.append(SkeletonSoldier(832, 192))
+    skeletons.append(SkeletonSoldier(544, 416))
+    skeletons.append(SkeletonSoldier(832, 416))
+    skeletons.append(SkeletonSoldier(544, 640))
+    skeletons.append(SkeletonSoldier(832, 640))"""
+
+    chest = Chest(
+        0,
+        0,
+        "desert_maze_chest"
+    )
+
+    chest.set_loot(make_chest_2())
+
+    chest.load_state(game_data)
+
+    chest1 = Chest(
+        928,
+        576,
+        "desert_maze_chest_1"
+    )
+
+    chest1.set_loot(make_hands_2())
+
+    chest1.load_state(game_data)
+
+    chest2 = Chest(
+        1248,
+        288,
+        "desert_maze_chest_2"
+    )
+
+    chest2.set_loot(make_head_2())
+
+    chest2.load_state(game_data)
+
+    chest3 = Chest(
+        0,
+        736,
+        "desert_maze_chest_3"
+    )
+
+    chest3.set_loot(make_legs_2())
+
+    chest3.load_state(game_data)
+
+    chest4 = Chest(
+        992,
+        256,
+        "maze_chest_4"
+    )
+
+    chest4.set_loot(make_sword_1())
+
+    chest4.load_state(game_data)
+
+    # ================= MAP =================
+    tiled_map = pytmx.load_pygame(
+        "Maps/Second Boss/DesertMaze.tmx",
+        pixelalpha=True
+    )
+
+    SCALE = 2
+
+    b1 = pygame.Surface(
+        (
+            tiled_map.width * tiled_map.tilewidth * SCALE,
+            tiled_map.height * tiled_map.tileheight * SCALE
+        )
+    ).convert_alpha()
+
+    def draw_map(surface):
+        for layer in tiled_map.visible_layers:
+            if isinstance(layer, pytmx.TiledTileLayer):
+                for x, y, gid in layer:
+                    tile = tiled_map.get_tile_image_by_gid(gid)
+                    if tile:
+                        tile = pygame.transform.scale(
+                            tile,
+                            (
+                                tiled_map.tilewidth * SCALE,
+                                tiled_map.tileheight * SCALE
+                            )
+                        )
+                        surface.blit(tile, (
+                            x * tiled_map.tilewidth * SCALE,
+                            y * tiled_map.tileheight * SCALE
+                        ))
+        return surface
+
+    SF = draw_map(b1)
+
+    # ================= COLLISION =================
+    walls = []
+
+    walls.append(chest.hitbox)
+    walls.append(chest1.hitbox)
+    walls.append(chest2.hitbox)
+    walls.append(chest3.hitbox)
+    walls.append(chest4.hitbox)
+
+    ice_rects = []
+
+    Change_Scene = []
+
+    Change_Scene_1 = []
+
+    save_message_timer = 0
+    save_message_text = ""
+
+    fade_surface = pygame.Surface((1280, 768))
+    fade_surface.fill((255, 255, 255))
+
+    fade_alpha = 0
+    fading = False
+    fade_start = 0
+
+    for obj in tiled_map.get_layer_by_name("collision"):
+        walls.append(
+            pygame.Rect(
+                obj.x * SCALE,
+                obj.y * SCALE,
+                obj.width * SCALE,
+                obj.height * SCALE
+            )
+        )
+
+    for obj in tiled_map.get_layer_by_name("Change_Scene"):
+        Change_Scene.append(pygame.Rect(obj.x * SCALE, obj.y * SCALE, obj.width * SCALE, obj.height * SCALE))
+
+    for obj in tiled_map.get_layer_by_name("Change_Scene_1"):
+        Change_Scene_1.append(pygame.Rect(obj.x * SCALE, obj.y * SCALE, obj.width * SCALE, obj.height * SCALE))
+
+    # ================= GAME LOOP =================
+    Game_active = True
+
+    while Game_active:
+
+        # ================= STATE =================
+        now = pygame.time.get_ticks()
+
+        ui_open = inventory_ui.open
+        chest_open = (
+                chest.state == "opened"
+                or
+                chest1.state == "opened"
+                or
+                chest2.state == "opened"
+                or
+                chest3.state == "opened"
+                or
+                chest4.state == "opened"
+        )
+
+        freeze_world = ui_open or chest_open or fading
+
+        keys = pygame.key.get_pressed()
+
+        # ================= EVENTS =================
+        for event in pygame.event.get():
+
+            mouse_pos = pygame.mouse.get_pos()
+
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+
+            # ================= KEY INPUT =================
+            if event.type == pygame.KEYDOWN:
+
+                if event.key == pygame.K_f and inventory_ui.open:
+                    inventory_ui.handle_use(player, game_data["inventory"])
+
+                if event.key == pygame.K_f:
+
+                    if chest.state == "opened":
+                        chest.close_ui()
+                    if chest1.state == "opened":
+                        chest1.close_ui()
+                    if chest2.state == "opened":
+                        chest2.close_ui()
+                    if chest3.state == "opened":
+                        chest3.close_ui()
+                    if chest4.state == "opened":
+                        chest4.close_ui()
+
+                # ===== INVENTORY =====
+                if event.key == pygame.K_i:
+                    inventory_ui.open = not inventory_ui.open
+
+                if inventory_ui.open:
+                    if event.key == pygame.K_LEFT:
+                        inventory_ui.move_cursor(-1, 0)
+                    if event.key == pygame.K_RIGHT:
+                        inventory_ui.move_cursor(1, 0)
+                    if event.key == pygame.K_UP:
+                        inventory_ui.move_cursor(0, -1)
+                    if event.key == pygame.K_DOWN:
+                        inventory_ui.move_cursor(0, 1)
+
+                # ===== COMBAT =====
+                if not freeze_world:
+
+                    if (
+                            event.key == pygame.K_e
+                            and player.bow
+                            and now - last_arrow_time > player.bow.cooldown
+                    ):
+                        x, y = player.get_center()
+                        arrows.append(Arrow(x, y, player.direction, arrow_images))
+                        arrow1.play()
+                        last_arrow_time = now
+                        player.bow_cooldown = player.bow.cooldown * 0.06
+                        player.max_bow_cooldown = player.bow.cooldown
+
+                    if event.key == pygame.K_q:
+
+                        if player.weapon is None:
+                            continue
+
+                        if now - last_melee_time >= player.weapon.cooldown:
+                            x, y = player.get_center()
+
+                            melee_weapons.append(
+                                MeleeWeapon(
+                                    x,
+                                    y,
+                                    player.direction,
+                                    melee_images
+                                )
+                            )
+
+                            random.choice(melee_sounds).play()
+
+                            last_melee_time = now
+
+        # ================= UPDATE =================
+        if not freeze_world:
+            player.move(keys, walls, ice_rects)
+            chest.update(player)
+            chest1.update(player)
+            chest2.update(player)
+            chest3.update(player)
+            chest4.update(player)
+
+            for sk in skeletons:
+                sk.move(player, walls)
+
+                for weapon in melee_weapons:
+
+                    for skeleton in skeletons:
+                        for arrow in skeleton.arrows[:]:
+
+                            if weapon.attack_rect.colliderect(arrow.get_rect()):
+                                arrow.active = False
+                                skeleton.arrows.remove(arrow)
+
+                    if weapon.hit_enemy(sk) and sk.alive:
+
+                        damage = 0
+
+                        if player.weapon:
+                            damage = player.weapon.attack
+
+                        sk.hit(damage)
+
+                for arrow in arrows:
+
+                    if sk.alive and arrow.hit_enemy(sk.get_rect()):
+
+                        damage = 0
+
+                        if player.bow:
+                            damage = player.bow.damage
+
+                        sk.hit(damage)
+
+                        arrows.remove(arrow)
+
+                        arrow_hit.play()
+
+                        break
+
+        if chest.give_loot:
+
+            if chest.loot_item:
+                inventory.add_item(chest.loot_item)
+
+            game_data["looted_chests"].add(
+                chest.chest_id
+            )
+
+            chest.give_loot = False
+
+        if chest1.give_loot:
+
+            if chest1.loot_item:
+                inventory.add_item(chest1.loot_item)
+
+            game_data["looted_chests"].add(
+                chest1.chest_id
+            )
+
+            chest1.give_loot = False
+
+        if chest2.give_loot:
+
+            if chest2.loot_item:
+                inventory.add_item(chest2.loot_item)
+
+            game_data["looted_chests"].add(
+                chest2.chest_id
+            )
+
+            chest2.give_loot = False
+
+        if chest3.give_loot:
+
+            if chest3.loot_item:
+                inventory.add_item(chest3.loot_item)
+
+            game_data["looted_chests"].add(
+                chest3.chest_id
+            )
+
+            chest3.give_loot = False
+
+        if chest4.give_loot:
+
+            if chest4.loot_item:
+                inventory.add_item(chest4.loot_item)
+
+            game_data["looted_chests"].add(
+                chest4.chest_id
+            )
+
+            chest4.give_loot = False
+
+        for arrow in arrows[:]:
+            if not arrow.update() or arrow.off_screen(1280, 768):
+                arrows.remove(arrow)
+
+        for weapon in melee_weapons[:]:
+            if not weapon.update():
+                melee_weapons.remove(weapon)
+
+        Screen.blit(SF, (0, 0))
+
+        chest.draw(Screen)
+        chest1.draw(Screen)
+        chest2.draw(Screen)
+        chest3.draw(Screen)
+        chest4.draw(Screen)
+
+        for sk in skeletons:
+            sk.draw(Screen)
+
+        player.draw(Screen)
+
+        if chest.state == "opened":
+            chest.draw_loot_ui(Screen)
+
+        if chest1.state == "opened":
+            chest1.draw_loot_ui(Screen)
+
+        if chest2.state == "opened":
+            chest2.draw_loot_ui(Screen)
+
+        if chest3.state == "opened":
+            chest3.draw_loot_ui(Screen)
+
+        if chest4.state == "opened":
+            chest4.draw_loot_ui(Screen)
+
+        for arrow in arrows:
+            arrow.draw(Screen)
+
+        for weapon in melee_weapons:
+            weapon.draw(Screen)
+
+        if inventory_ui.open:
+            inventory_ui.draw(Screen)
+
+        if save_message_timer > 0:
+            draw_save_message(Screen, save_message_text)
+
+            save_message_timer -= 1
+
+        for rect in Change_Scene_1:
+            if player.get_rect().colliderect(rect):
+                pygame.mixer.music.stop()
+                game_data["Scene_Back"] = True
+                return "DesertVillage"
+
+        for rect in Change_Scene:
+            if player.get_rect().colliderect(rect):
+                pygame.mixer.music.stop()
+                return "DesertVillage"
+
+        player.draw_health_bar(Screen)
+        player.draw_stamina_bar(Screen)
+        if player.can_attack:
+            player.draw_weapon_cooldowns(Screen)
+
+        if player.health <= 0:
+            player.dead = True
+
+        if player.dead:
+
+            white = pygame.Surface(Screen.get_size())
+            white.fill((255, 255, 255))
+
+            old_screen = Screen.copy()
+
+            for alpha in range(0, 255, 8):
+                Screen.blit(old_screen, (0, 0))
+
+                white.set_alpha(alpha)
+
+                Screen.blit(white, (0, 0))
+
+                pygame.display.update()
+
+                clock.tick(60)
+
+            pygame.mixer.music.stop()
+            pygame.mixer.stop()
+
+            return respawn_from_save(player, game_data)
+
+        pygame.display.update()
+        clock.tick(60)
+    pygame.mixer.music.stop()
+    pygame.mixer.stop()
+
 player = Player(spawn_x=297, spawn_y=389)
 
 inventory = Inventory(cols=6, rows=3)
@@ -3750,6 +4598,12 @@ while True:
 
     elif current_scene == "First_Boss":
         current_scene = First_Boss(player, game_data)
+
+    elif current_scene == "DesertVillage":
+        current_scene = DesertVillage(player, game_data)
+
+    elif current_scene == "DesertMaze":
+        current_scene = DesertMaze(player, game_data)
 
     elif current_scene == "quit":
         break

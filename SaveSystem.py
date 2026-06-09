@@ -15,7 +15,7 @@ SAVE_FILE = "save.txt"
 # =========================
 def make_sword():
     return Weapon(
-        "Sword",
+        "Soldier's Sword",
         "Items/Sword.png",
         "A metal blade that deals 1 damage per slash",
         1,
@@ -32,14 +32,14 @@ def make_axe():
     return Weapon(
         "Axe",
         "Items/Axe.png",
-        "A metal axe that deals 3 damage per slash",
-        25,
+        "A heavy axe that deals 5 damage per slash",
+        5,
         1250
     )
 
 def make_bow():
     return Bow(
-        "Hunter Bow",
+        "Hunter's Bow",
         "Items/Bow.png",
         "A bow used for ranged attacks",
         3,
@@ -81,16 +81,66 @@ def make_legs_1():
         2,
         "legs"
     )
+
+def make_head_2():
+    return Armor(
+        "Knight's Helmet",
+        "Items/Head2.png",
+        "A helmet that adds 6 defence",
+        6,
+        "head"
+    )
+
+def make_chest_2():
+    return Armor(
+        "Knight's Chestplate",
+        "Items/Chest2.png",
+        "A chestplate that adds 8 defence",
+        8,
+        "chest"
+    )
+
+def make_hands_2():
+    return Armor(
+        "Knight's Gauntlets",
+        "Items/Hand2.png",
+        "A gauntlets that adds 4 defence",
+        4,
+        "hands"
+    )
+
+def make_legs_2():
+    return Armor(
+        "Knight's Leggings",
+        "Items/Foot2.png",
+        "A Leggings that adds 4 defence",
+        4,
+        "legs"
+    )
+
+def make_sword_1():
+    return Weapon(
+        "Knight's Sword",
+        "Items/Sword1.png",
+        "A sharp blade that deals 4 damage per slash",
+        4,
+        500
+    )
 def create_item_by_name(name):
     registry = {
         "Sword": make_sword,
         "Key": make_key,
         "Axe": make_axe,
-        "Bow": make_bow,
+        "Hunter's Bow": make_bow,
         "Soldier's Helmet": make_head_1,
         "Soldier's Chestplate": make_chest_1,
-        "Soldier's Hands": make_hands_1,
+        "Soldier's Gauntlets": make_hands_1,
         "Soldier's Leggings": make_legs_1,
+        "Knight's Helmet": make_head_2,
+        "Knight's Chestplate": make_chest_2,
+        "Knight's Gauntlets": make_hands_2,
+        "Knight's Leggings": make_legs_2,
+        "Knight's Sword": make_sword_1,
     }
 
     if name in registry:

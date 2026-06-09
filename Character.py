@@ -116,7 +116,7 @@ class Player:
 
         # ================= STAMINA =================
 
-        self.max_stamina = 180
+        self.max_stamina = 100000
         self.stamina = self.max_stamina
 
         self.stamina_recharge_delay = 0
@@ -647,10 +647,14 @@ class Player:
 
             screen.blit(icon, (x, y))
 
+            max_cd = self.bow.cooldown * 0.06
+
             ratio = 1
 
-            if self.max_bow_cooldown > 0:
-                ratio = 1 - self.bow_cooldown / self.max_bow_cooldown
+            if max_cd > 0:
+                ratio = 1 - self.bow_cooldown / max_cd
+
+            ratio = max(0, min(1, ratio))
 
             pygame.draw.rect(
                 screen,
