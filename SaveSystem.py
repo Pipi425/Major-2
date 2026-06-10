@@ -128,7 +128,7 @@ def make_sword_1():
     )
 def create_item_by_name(name):
     registry = {
-        "Sword": make_sword,
+        "Soldier's Sword": make_sword,
         "Key": make_key,
         "Axe": make_axe,
         "Hunter's Bow": make_bow,

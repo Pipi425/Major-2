@@ -200,6 +200,27 @@ class SkeletonSoldier:
 
         self.arrows = []
 
+        self.die_sound = pygame.mixer.Sound(
+            "SkeletonSoldier/Sounds/Die.mp3"
+        )
+
+        self.target_sound = pygame.mixer.Sound(
+            "SkeletonSoldier/Sounds/Target.mp3"
+        )
+
+        self.hit_sound = pygame.mixer.Sound(
+            "SkeletonSoldier/Sounds/Hit.mp3"
+        )
+
+        self.hurt_sound = pygame.mixer.Sound(
+            "SkeletonSoldier/Sounds/Hurt.mp3"
+        )
+
+        self.hit_sound.set_volume(0.15)
+        self.target_sound.set_volume(0.3)
+        self.hurt_sound.set_volume(0.4)
+        self.die_sound.set_volume(0.4)
+
     def set_state(self, state):
         if self.state == state:
             return
@@ -353,6 +374,9 @@ class SkeletonSoldier:
 
         x, y = self.get_shoot_position()
         self.arrows.append(SkeletonArrow(x, y, self.direction, self.arrow_images))
+
+        self.hit_sound.play()
+
         self.shoot_done = True
 
     def count_cooldown(self):
@@ -370,13 +394,25 @@ class SkeletonSoldier:
         if not self.alive:
             return
 
+        print("Skeleton hit", damage)
+
         self.hp -= damage
 
         if self.hp <= 0:
+            print("Skeleton DEAD")
             self.hp = 0
+
+            self.die_sound.stop()
+            self.die_sound.play()
+
             self.alive = False
             self.dead_done = True
+
             return
+
+        # ===== 受伤 =====
+        self.hurt_sound.stop()
+        self.hurt_sound.play()
 
         self.set_state("hurt")
         self.hurt_time = 18

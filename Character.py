@@ -94,8 +94,9 @@ class Player:
         self.attack_key_down = False
         self.attack_cooldown = 0
 
-        self.base_health = 12
+        self.base_health = 10000
         self.health = 12
+        self.hp = self.health
 
         self.dead = False
 
@@ -231,20 +232,23 @@ class Player:
         return rect.center
 
     def take_hit(self, damage):
-        if not self.hit and not self.dead:
-            random.choice(self.hurt_sound).play()
 
-            self.hit = True
-            self.hit_timer = 30
-            self.hit_flash_counter = 0
+        if self.hit or self.dead:
+            return
 
-            self.health -= damage
-            self.hp = self.health
+        random.choice(self.hurt_sound).play()
 
-            if self.health <= 0:
-                self.health = 0
-                self.hp = 0
-                self.dead = True
+        self.hit = True
+        self.hit_timer = 30
+        self.hit_flash_counter = 0
+
+        self.health -= damage
+        self.hp = self.health
+
+        if self.health <= 0:
+            self.health = 0
+            self.hp = 0
+            self.dead = True
 
     def check_move(self, dx, dy, walls):
         test_rect = self.get_rect()

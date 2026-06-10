@@ -3,8 +3,7 @@ import math
 
 
 def load_images(path, frame_count, size):
-    sheet = pygame.image.load(path).convert()
-    sheet.set_colorkey((0, 0, 0))
+    sheet = pygame.image.load(path).convert_alpha()
 
     frames = []
 
@@ -16,9 +15,7 @@ def load_images(path, frame_count, size):
             pygame.Rect(i * frame_width, 0, frame_width, frame_height)
         ).copy()
 
-        frame.set_colorkey((0, 0, 0))
         frame = pygame.transform.scale(frame, size)
-        frame.set_colorkey((0, 0, 0))
 
         frames.append(frame)
 
@@ -42,7 +39,7 @@ class Bone:
         self.lifetime = 170
 
     def get_rect(self):
-        return pygame.Rect(self.x + 8, self.y + 8, 40, 28)
+        return pygame.Rect(self.x + 75, self.y + 75, 50, 50)
 
     def update_animation(self):
         self.animation_count += 1
@@ -55,6 +52,21 @@ class Bone:
                 self.frame = 0
 
     def update(self, player, walls):
+
+        player_rect = player.get_rect()
+
+        target_dx = player_rect.centerx - (self.x + 100)
+        target_dy = player_rect.centery - (self.y + 100)
+
+        distance = math.sqrt(
+            target_dx * target_dx +
+            target_dy * target_dy
+        )
+
+        if distance != 0:
+            self.dx = target_dx / distance
+            self.dy = target_dy / distance
+
         self.x += self.dx * self.speed
         self.y += self.dy * self.speed
 
@@ -101,18 +113,27 @@ class Bone:
 
         screen.blit(image, (self.x, self.y))
 
+        pygame.draw.rect(
+            screen,
+            (0, 0, 255),
+            image.get_rect(topleft=(self.x, self.y)),
+            2
+        )
+
 
 class SecondBoss:
     def __init__(self, x, y):
 
         # animations
-        self.idle = load_images("BoneBoss/idle.png", 10, (150, 150))
-        self.walk = load_images("BoneBoss/walk.png", 6, (150, 150))
-        self.attack = load_images("BoneBoss/attack.png", 10, (150, 150))
-        self.hurt = load_images("BoneBoss/hurt.png", 5, (150, 150))
-        self.die = load_images("BoneBoss/death.png", 7, (150, 150))
+        BOSS_SIZE = (400, 400)
 
-        self.bone_images = load_images("BoneBoss/bone.png", 3, (65, 48))
+        self.idle = load_images("BoneBoss/idle.png", 10, BOSS_SIZE)
+        self.walk = load_images("BoneBoss/walk.png", 6, BOSS_SIZE)
+        self.attack = load_images("BoneBoss/attack.png", 10, BOSS_SIZE)
+        self.hurt = load_images("BoneBoss/hurt.png", 5, BOSS_SIZE)
+        self.die = load_images("BoneBoss/death.png", 7, BOSS_SIZE)
+
+        self.bone_images = load_images("BoneBoss/bone.png", 3, (200, 200))
 
         # position
         self.x = x
@@ -127,13 +148,14 @@ class SecondBoss:
         self.flip = False
 
         # hp
-        self.hp = 18
-        self.max_hp = 18
+        self.hp = 100
+        self.max_hp = 100
         self.alive = True
         self.dead_done = False
 
         # movement
-        self.speed = 1.2
+        self.speed = 2
+        self.speed_count = 0
 
         # attack
         self.attack_cooldown = 0
@@ -145,7 +167,12 @@ class SecondBoss:
         self.hurt_time = 0
 
     def get_rect(self):
-        return pygame.Rect(self.x + 50, self.y + 58, 55, 65)
+        return pygame.Rect(
+            self.x + 135,
+            self.y + 130,
+            130,
+            120
+        )
 
     def update_animation(self, speed):
         images = self.get_current_images()
@@ -186,8 +213,8 @@ class SecondBoss:
         dx = dx / distance
         dy = dy / distance
 
-        bone_x = boss_rect.centerx - 25
-        bone_y = boss_rect.centery - 20
+        bone_x = boss_rect.centerx - 100
+        bone_y = boss_rect.centery - 100
 
         self.bones.append(
             Bone(bone_x, bone_y, dx, dy, self.bone_images)
@@ -321,11 +348,11 @@ class SecondBoss:
         self.state = "idle"
         self.update_animation(7)
 
-    def hit(self):
+    def hit(self, damage):
         if not self.alive:
             return
 
-        self.hp -= 1
+        self.hp -= damage
 
         self.state = "hurt"
         self.frame = 0
@@ -343,11 +370,11 @@ class SecondBoss:
         if not self.alive:
             return
 
-        bar_x = self.x + 10
-        bar_y = self.y - 15
+        bar_x = self.x + 125
+        bar_y = self.y + 100
 
-        width = 130
-        height = 10
+        width = 150
+        height = 12
 
         current_width = width * (self.hp / self.max_hp)
 
@@ -403,7 +430,21 @@ class SecondBoss:
 
         screen.blit(image, (self.x, self.y))
 
+        pygame.draw.rect(
+            screen,
+            (255, 0, 0),
+            self.get_rect(),
+            2
+        )
+
         self.draw_health_bar(screen)
 
         for bone in self.bones:
             bone.draw(screen)
+
+            pygame.draw.rect(
+                screen,
+                (0, 255, 0),
+                bone.get_rect(),
+                2
+            )

@@ -81,6 +81,11 @@ class Boss:
 
         self.sounds = []
 
+        self.steps = []
+        self.step_timer = 0
+        self.normal_step_delay = 25
+        self.enraged_step_delay = 12
+
         self.HurtSounds = []
 
         self.hurt_sound_played = False
@@ -97,6 +102,10 @@ class Boss:
             self.sounds[i].set_volume(0.5)
             if i > 0:
                 self.HurtSounds.append(pygame.mixer.Sound(f"HurtSounds/Boss1/Stone{i}.mp3"))
+
+        for i in range(1, 5):
+            self.steps.append(pygame.mixer.Sound(f"Bosses/Sounds/Step{i}.mp3"))
+            self.steps[i - 1].set_volume(0.5)
 
     def get_rect(self):
         return pygame.Rect(self.x + 85, self.y + 130, 160, 140)
@@ -253,6 +262,13 @@ class Boss:
 
             if self.charge_time > 0:
 
+                self.step_timer += 1
+
+                if self.step_timer >= 5:
+                    random.choice(self.steps).play()
+
+                    self.step_timer = 0
+
                 move_x = self.charge_x * self.charge_speed
                 move_y = self.charge_y * self.charge_speed
 
@@ -404,6 +420,20 @@ class Boss:
                         self.stuck_timer = 0
 
                         break
+
+        if moved:
+
+            self.step_timer += 1
+
+            if self.enraged:
+                step_delay = self.enraged_step_delay
+            else:
+                step_delay = self.normal_step_delay
+
+            if self.step_timer >= step_delay:
+                random.choice(self.steps).play()
+
+                self.step_timer = 0
 
         self.update_animation(6)
 

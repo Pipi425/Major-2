@@ -70,6 +70,13 @@ SAVE_POINTS = {
         "y": 290,
         "spawn_x": -40,
         "spawn_y": 362
+    },
+    "PreRoom_save": {
+        "scene": "PreRoom",
+        "x": 994,
+        "y": 400,
+        "spawn_x": 970,
+        "spawn_y": 660
     }
 
 }
