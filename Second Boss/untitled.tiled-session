@@ -1,0 +1,125 @@
+{
+    "activeFile": "Boss.tmx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "": {
+            "scaleInDock": 1
+        },
+        "/Users/milanli/PyCharmMiscProject/ICS4U/Real Major 2/Maps/First Boss/Ice.tsx": {
+            "scaleInDock": 1
+        },
+        "/Users/milanli/PyCharmMiscProject/ICS4U/Real Major 2/Maps/First Boss/SnowVillage.tmx": {
+            "scale": 1.0114,
+            "selectedLayer": 7,
+            "viewCenter": {
+                "x": 276.3496143958868,
+                "y": 461.24184298991497
+            }
+        },
+        "/Users/milanli/PyCharmMiscProject/ICS4U/Real Major 2/Maps/First Boss/SnowVillage.tmx#Ice": {
+            "scaleInDock": 1
+        },
+        "Boss.tmx": {
+            "expandedObjectLayers": [
+                6,
+                4
+            ],
+            "scale": 0.8771,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 354.0075247976285,
+                "y": 334.62547029985177
+            }
+        },
+        "Desert.tsx": {
+            "scaleInDock": 1.5955
+        },
+        "DesertMaze.tmx": {
+            "scale": 1.8467,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 439.4325012183896,
+                "y": 76.6231656468295
+            }
+        },
+        "DesertVillage.tmx": {
+            "expandedObjectLayers": [
+                7,
+                8,
+                6,
+                9
+            ],
+            "scale": 1.1428,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 47.689884494224714,
+                "y": 141.3195659782989
+            }
+        },
+        "DesertVillage.tmx#Desert": {
+            "scaleInDock": 1
+        },
+        "DesertVillage.tmx#sand": {
+            "scaleInDock": 1
+        },
+        "PreRoom.tmx": {
+            "expandedObjectLayers": [
+                7,
+                6,
+                3,
+                4
+            ],
+            "scale": 1.2249,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 405.3392113641929,
+                "y": 192.26059270144503
+            }
+        },
+        "sand.tsx": {
+            "scaleInDock": 2.1558
+        },
+        "untitled.tmx": {
+            "expandedObjectLayers": [
+                7,
+                6
+            ],
+            "scale": 2.0821,
+            "selectedLayer": 6,
+            "viewCenter": {
+                "x": 65.55881081600307,
+                "y": 213.96666826761444
+            }
+        },
+        "untitled.tmx#Desert": {
+            "scaleInDock": 1.7857
+        },
+        "untitled.tmx#sand": {
+            "scaleInDock": 1.2956
+        }
+    },
+    "last.externalTilesetPath": "/Users/milanli/PyCharmMiscProject/ICS4U/Real Major 2/Maps/Second Boss",
+    "map.height": 24,
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 40,
+    "openFiles": [
+        "DesertVillage.tmx",
+        "DesertMaze.tmx",
+        "PreRoom.tmx",
+        "Boss.tmx"
+    ],
+    "project": "untitled.tiled-project",
+    "recentFiles": [
+        "DesertVillage.tmx",
+        "DesertMaze.tmx",
+        "PreRoom.tmx",
+        "Boss.tmx",
+        "/Users/milanli/PyCharmMiscProject/ICS4U/Real Major 2/Maps/First Boss/SnowVillage.tmx",
+        "untitled.tmx"
+    ]
+}
