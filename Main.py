@@ -14,7 +14,7 @@ from Chest import Chest
 from Sprite import SpriteObject
 from SavePoint import SavePoint
 from Boss import Boss
-from SecondBoss import SecondBoss
+from SecondBoss import SecondBoss, MiniSecondBoss
 from SkeletonSoldier import SkeletonSoldier
 from SkeletonBoxer import SkeletonBoxer
 from SkeletonWizard import SkeletonWizard
@@ -36,7 +36,8 @@ from SaveSystem import (
     make_chest_2,
     make_legs_2,
     make_hands_2,
-    make_sword_1
+    make_sword_1,
+    make_bayonet
 )
 from Hint import HintAnimation
 
@@ -455,6 +456,8 @@ def first_scene(player, game_data):
             )
 
             chest.give_loot = False
+
+
 
         if not freeze_world:
 
@@ -4560,7 +4563,7 @@ def PreRoom(player, game_data):
     # ================= INIT =================
     player.can_attack = False
     if game_data.get("Scene_Back"):
-        player.set_position(778, -40)
+        player.set_position(810, -40)
         game_data["Scene_Back"] = False
     else:
         player.set_position(970, 660)
@@ -4842,6 +4845,15 @@ def Second_Boss(player, game_data):
     player.can_attack = True
     player.set_position(810, 660)
 
+    music_fading_down = False
+    music_fade_start = 0
+
+    music_fading_up = False
+    music_fade_up_start = 0
+
+    ending_started = False
+    boss_phase1_done = False
+
     last_arrow_time = 0
     last_melee_time = 0
 
@@ -4857,6 +4869,9 @@ def Second_Boss(player, game_data):
     arrow_hit = pygame.mixer.Sound("SoundEffects/Arrow_hit.mp3")
     arrow_hit.set_volume(0.05)
 
+    bone1 = pygame.mixer.Sound("BoneBoss/Sounds/BoneCrack.mp3")
+    bone1.set_volume(0.5)
+
     melee_sounds = [
         pygame.mixer.Sound(f"SoundEffects/Melee{i}.mp3")
         for i in range(1, 4)
@@ -4866,20 +4881,18 @@ def Second_Boss(player, game_data):
 
     if not game_data["Boss2"]:
         pygame.mixer.music.load("Musics/SecondBoss.mp3")
-        pygame.mixer.music.set_volume(0.6)
+        pygame.mixer.music.set_volume(0.4)
         pygame.mixer.music.play(-1)
 
-    chest = None
 
-    if game_data["Boss2"]:
-        chest = Chest(
-            304,
-            368,
-            "boss2_chest"
-        )
+    chest = Chest(
+        32,
+        480,
+        "boss2_chest"
+    )
 
-        chest.set_loot(make_bow())
-        chest.load_state(game_data)
+    chest.set_loot(make_bayonet())
+    chest.load_state(game_data)
 
 
     Screen = pygame.display.set_mode((1280, 768))
@@ -4891,7 +4904,11 @@ def Second_Boss(player, game_data):
     arrows = []
     melee_weapons = []
 
-    boss = SecondBoss(400, 200)
+    boss = SecondBoss(-50, 300)
+
+    mini_bosses = []
+
+    mini_spawned = False
 
     boss_leave_warning = False
 
@@ -4934,8 +4951,7 @@ def Second_Boss(player, game_data):
     # ================= COLLISION =================
     walls = []
 
-    if chest:
-        walls.append(chest.hitbox)
+    walls.append(chest.hitbox)
 
     ice_rects = []
 
@@ -4982,11 +4998,8 @@ def Second_Boss(player, game_data):
 
         ui_open = inventory_ui.open
 
-        if chest:
-            chest_open = chest.state == "opened"
-            freeze_world = ui_open or boss_leave_warning or chest_open
-        else:
-            freeze_world = ui_open or boss_leave_warning
+        chest_open = chest.state == "opened"
+        freeze_world = ui_open or boss_leave_warning or chest_open
 
         keys = pygame.key.get_pressed()
 
@@ -5005,7 +5018,8 @@ def Second_Boss(player, game_data):
                 if boss_leave_warning:
 
                     if event.key == pygame.K_y:
-                        pygame.mixer.music.fadeout(1000)
+                        pygame.mixer.music.fadeout(1500)
+                        game_data["Scene_Back"] = True
                         return "PreRoom"
 
                     elif event.key == pygame.K_n:
@@ -5017,10 +5031,9 @@ def Second_Boss(player, game_data):
                 if event.key == pygame.K_f and inventory_ui.open:
                     inventory_ui.handle_use(player, game_data["inventory"])
 
-                if chest:
-                    if event.key == pygame.K_f:
-                        if chest.state == "opened":
-                            chest.close_ui()
+                if event.key == pygame.K_f:
+                    if chest.state == "opened":
+                        chest.close_ui()
 
                 # ===== INVENTORY =====
                 if event.key == pygame.K_i:
@@ -5079,9 +5092,25 @@ def Second_Boss(player, game_data):
             for bone in boss.bones[:]:
 
                 if weapon.hit_enemy(bone):
+                    bone1.play()
                     boss.bones.remove(bone)
-
                     break
+
+            for mini in mini_bosses:
+
+                for bone in mini.bones[:]:
+
+                    if weapon.hit_enemy(bone):
+                        bone1.play()
+                        mini.bones.remove(bone)
+                        break
+
+            for mini in mini_bosses:
+
+                if weapon.hit_enemy(mini) and mini.alive:
+                    damage = player.weapon.attack
+
+                    mini.hit(damage)
 
             if weapon.hit_enemy(boss) and boss.alive and not game_data["Boss2"]:
 
@@ -5093,6 +5122,19 @@ def Second_Boss(player, game_data):
                 boss.hit(damage)
 
         for arrow in arrows:
+
+            for mini in mini_bosses:
+
+                if mini.alive and arrow.hit_enemy(mini.get_rect()):
+                    damage = player.bow.damage
+
+                    mini.hit(damage)
+
+                    arrows.remove(arrow)
+
+                    arrow_hit.play()
+
+                    break
 
             if boss.alive and arrow.hit_enemy(boss.get_rect()) and not game_data["Boss1"]:
 
@@ -5117,23 +5159,67 @@ def Second_Boss(player, game_data):
                 if player.get_rect().colliderect(rect):
                     player.take_hit(1)
 
-            if chest:
+            if boss.dead_done:
                 chest.update(player)
 
-            if not game_data["Boss2"]:
+            if not mini_spawned and not game_data["Boss2"]:
                 boss.move(player, walls)
 
-        if chest:
-            if chest.give_loot:
+            for mini in mini_bosses:
+                mini.move(player, walls)
 
-                if chest.loot_item:
-                    inventory.add_item(chest.loot_item)
+        if (
+                mini_spawned
+                and not ending_started
+                and all(not mini.alive for mini in mini_bosses)
+        ):
+            ending_started = True
 
-                game_data["looted_chests"].add(
-                    chest.chest_id
+            fading = True
+            fade_start = now
+
+            pygame.mixer.music.fadeout(3000)
+
+            game_data["Boss2"] = True
+
+        if chest.give_loot:
+
+            if chest.loot_item:
+                inventory.add_item(chest.loot_item)
+
+            game_data["looted_chests"].add(
+                chest.chest_id
+            )
+
+            chest.give_loot = False
+
+        if (
+                boss_phase1_done
+                and chest.state == "opened"
+                and not mini_spawned
+        ):
+            music_fading_up = True
+            music_fade_up_start = now
+
+            mini_bosses.append(
+                MiniSecondBoss(
+                    300, 250
                 )
+            )
 
-                chest.give_loot = False
+            mini_bosses.append(
+                MiniSecondBoss(
+                    500, 250
+                )
+            )
+
+            mini_bosses.append(
+                MiniSecondBoss(
+                    700, 250
+                )
+            )
+
+            mini_spawned = True
 
         for arrow in arrows[:]:
             if not arrow.update() or arrow.off_screen(1280, 768):
@@ -5150,27 +5236,29 @@ def Second_Boss(player, game_data):
 
         player.draw(Screen)
 
-        if chest:
-            if chest.state == "opened":
-                chest.draw_loot_ui(Screen)
-
-        if not game_data["Boss2"]:
+        if not mini_spawned and not game_data["Boss2"]:
             boss.draw(Screen)
 
-        if boss.dead_done and not fading:
-            fading = True
-            fade_start = pygame.time.get_ticks()
+        for mini in mini_bosses:
+            mini.draw(Screen)
 
-            # 所有声音淡出
-            pygame.mixer.music.fadeout(1500)
+        if (
+                boss.dead_done
+                and not boss_phase1_done
+        ):
+            boss_phase1_done = True
 
-            game_data["Boss2"] = True
+            music_fading_down = True
+            music_fade_start = now
 
         for arrow in arrows:
             arrow.draw(Screen)
 
         for weapon in melee_weapons:
             weapon.draw(Screen)
+
+        if chest.state == "opened":
+            chest.draw_loot_ui(Screen)
 
         if inventory_ui.open:
             inventory_ui.draw(Screen)
@@ -5190,6 +5278,7 @@ def Second_Boss(player, game_data):
                 else:
 
                     pygame.mixer.music.fadeout(1000)
+                    game_data["Scene_Back"] = True
                     return "PreRoom"
 
         if boss_leave_warning:
@@ -5265,10 +5354,13 @@ def Second_Boss(player, game_data):
             return respawn_from_save(player, game_data)
 
         if fading:
-            elapsed = pygame.time.get_ticks() - fade_start
+
+            elapsed = now - fade_start
 
             if elapsed >= 3000:
-                return "Second_Boss"
+                pygame.mixer.music.stop()
+                game_data["Scene_Back"] = True
+                return "PreRoom"
 
             alpha = min(
                 255,
@@ -5284,6 +5376,36 @@ def Second_Boss(player, game_data):
             fade_surface.set_alpha(alpha)
 
             Screen.blit(fade_surface, (0, 0))
+
+        if music_fading_down:
+
+            elapsed = now - music_fade_start
+
+            volume = max(
+                0.0,
+                0.4 - elapsed / 2000 * 0.4
+            )
+
+            pygame.mixer.music.set_volume(volume)
+
+            if elapsed >= 2000:
+                music_fading_down = False
+                pygame.mixer.music.set_volume(0)
+
+        if music_fading_up:
+
+            elapsed = now - music_fade_up_start
+
+            volume = min(
+                0.4,
+                elapsed / 1500 * 0.4
+            )
+
+            pygame.mixer.music.set_volume(volume)
+
+            if elapsed >= 1500:
+                music_fading_up = False
+                pygame.mixer.music.set_volume(0.4)
 
         pygame.display.update()
         clock.tick(60)
@@ -5308,7 +5430,7 @@ game_data = {
     "Boss3": False,
 }
 
-current_scene = "First_Bossd"
+current_scene = "menu"
 
 while True:
 

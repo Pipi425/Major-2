@@ -39,6 +39,8 @@ class Player:
         self.run = {}
         self.attack = {}
 
+        self.attack_speed = 0
+
         for direction in DIRECTIONS:
             self.idle[direction] = load_images(
                 "Characters_saber/idle_" + direction + ".png",
@@ -94,7 +96,7 @@ class Player:
         self.attack_key_down = False
         self.attack_cooldown = 0
 
-        self.base_health = 10000
+        self.base_health = 12
         self.health = 12
         self.hp = self.health
 
@@ -142,6 +144,11 @@ class Player:
         )
 
     def start_attack(self):
+        self.attack_speed = max(
+            1,
+            int(self.weapon.cooldown / 200)
+        )
+
         if self.attacking:
             return
 
@@ -168,7 +175,7 @@ class Player:
 
         self.attack_count += 1
 
-        if self.attack_count >= 3:
+        if self.attack_count >= self.attack_speed:
             self.attack_count = 0
             self.attack_frame += 1
 

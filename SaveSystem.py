@@ -126,6 +126,17 @@ def make_sword_1():
         4,
         500
     )
+
+def make_bayonet():
+    return Weapon(
+        "Fearless' Bayonet",
+        "Items/Bayonet.png",
+        "A fast spike that deals 3 damage per stab",
+        50,
+        250
+
+
+    )
 def create_item_by_name(name):
     registry = {
         "Soldier's Sword": make_sword,
@@ -141,6 +152,7 @@ def create_item_by_name(name):
         "Knight's Gauntlets": make_hands_2,
         "Knight's Leggings": make_legs_2,
         "Knight's Sword": make_sword_1,
+        "Fearless' Bayonet": make_bayonet,
     }
 
     if name in registry:

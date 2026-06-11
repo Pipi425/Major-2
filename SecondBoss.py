@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 
 
 def load_images(path, frame_count, size):
@@ -35,7 +36,7 @@ class Bone:
         self.animation_count = 0
 
         self.speed = 7
-        self.damage = 2
+        self.damage = 4
         self.lifetime = 170
 
     def get_rect(self):
@@ -113,14 +114,6 @@ class Bone:
 
         screen.blit(image, (self.x, self.y))
 
-        pygame.draw.rect(
-            screen,
-            (0, 0, 255),
-            image.get_rect(topleft=(self.x, self.y)),
-            2
-        )
-
-
 class SecondBoss:
     def __init__(self, x, y):
 
@@ -148,8 +141,8 @@ class SecondBoss:
         self.flip = False
 
         # hp
-        self.hp = 100
-        self.max_hp = 100
+        self.hp = 200
+        self.max_hp = 200
         self.alive = True
         self.dead_done = False
 
@@ -165,6 +158,26 @@ class SecondBoss:
 
         # hurt
         self.hurt_time = 0
+
+        self.corpse = False
+
+        self.sounds = []
+        self.sounds.append(pygame.mixer.Sound("BoneBoss/Sounds/Roar.mp3"))
+        self.sounds.append(pygame.mixer.Sound("BoneBoss/Sounds/Sniff.mp3"))
+        self.sounds.append(pygame.mixer.Sound("BoneBoss/Sounds/Hurt.mp3"))
+        self.sounds[0].set_volume(0.5)
+        self.sounds[1].set_volume(0.5)
+        self.sounds[2].set_volume(1)
+
+        self.intro_roar_played = False
+        self.death_sound_played = False
+        self.step_timer = 0
+
+        self.Steps = []
+        for i in range(7):
+            self.Steps.append(pygame.mixer.Sound(f"BoneBoss/Sounds/Step{i}.mp3"))
+            self.Steps[i].set_volume(0.5)
+
 
     def get_rect(self):
         return pygame.Rect(
@@ -256,9 +269,20 @@ class SecondBoss:
 
     def move(self, player, walls):
 
+        if not self.intro_roar_played:
+            self.sounds[0].play()
+
+            self.intro_roar_played = True
+
         self.update_bones(player, walls)
 
         if not self.alive:
+
+            if not self.death_sound_played:
+                self.sounds[0].play()
+
+                self.death_sound_played = True
+
             self.state = "die"
             self.update_animation(7)
             return
@@ -305,6 +329,9 @@ class SecondBoss:
 
         # start throwing bone
         if distance < 550 and distance > 180 and self.attack_cooldown <= 0:
+
+            self.sounds[1].play()
+
             self.state = "attack"
             self.frame = 0
             self.animation_count = 0
@@ -318,6 +345,13 @@ class SecondBoss:
         # follow player if too far
         if distance > 300 and distance < 800:
             self.state = "walk"
+
+            self.step_timer += 1
+
+            if self.step_timer >= random.randint(14, 22):
+                random.choice(self.Steps).play()
+
+                self.step_timer = 0
 
             if distance == 0:
                 distance = 1
@@ -333,6 +367,13 @@ class SecondBoss:
         # move away if player is too close
         if distance < 180:
             self.state = "walk"
+
+            self.step_timer += 1
+
+            if self.step_timer >= random.randint(14, 22):
+                random.choice(self.Steps).play()
+
+                self.step_timer = 0
 
             if distance == 0:
                 distance = 1
@@ -354,6 +395,7 @@ class SecondBoss:
 
         self.hp -= damage
 
+        self.sounds[2].play()
         self.state = "hurt"
         self.frame = 0
         self.animation_count = 0
@@ -361,6 +403,7 @@ class SecondBoss:
 
         if self.hp <= 0:
             self.hp = 0
+            self.corpse = True
             self.alive = False
             self.state = "die"
             self.frame = 0
@@ -430,21 +473,480 @@ class SecondBoss:
 
         screen.blit(image, (self.x, self.y))
 
+        self.draw_health_bar(screen)
+
+        for bone in self.bones:
+            bone.draw(screen)
+
+class MiniBone:
+    def __init__(self, x, y, dx, dy, images):
+        self.x = x
+        self.y = y
+
+        self.dx = dx
+        self.dy = dy
+
+        self.images = images
+        self.frame = 0
+        self.animation_count = 0
+
+        self.speed = 8
+        self.damage = 1
+        self.lifetime = 170
+
+    def get_rect(self):
+        return pygame.Rect(
+            self.x + 45,
+            self.y + 45,
+            30,
+            30
+        )
+
+    def update_animation(self):
+        self.animation_count += 1
+
+        if self.animation_count >= 5:
+            self.animation_count = 0
+            self.frame += 1
+
+            if self.frame >= len(self.images):
+                self.frame = 0
+
+    def update(self, player, walls):
+
+        self.x += self.dx * self.speed
+        self.y += self.dy * self.speed
+
+        self.lifetime -= 1
+        self.update_animation()
+
+        for wall in walls:
+            if self.get_rect().colliderect(wall):
+                return False
+
+        if self.get_rect().colliderect(player.get_hurt_rect()):
+            self.hit_player(player)
+            return False
+
+        if self.lifetime <= 0:
+            return False
+
+        return True
+
+    def hit_player(self, player):
+        if player.hit:
+            return
+
+        player.health -= self.damage
+        player.hp = player.health
+
+        player.hit = True
+        player.hit_timer = 60
+        player.hit_flash_counter = 0
+
+        if player.health <= 0:
+            player.health = 0
+            player.hp = 0
+            player.dead = True
+
+        if len(player.hurt_sound) > 0:
+            player.hurt_sound[0].play()
+
+    def draw(self, screen):
+        image = self.images[self.frame]
+
+        if self.dx < 0:
+            image = pygame.transform.flip(image, True, False)
+
+        screen.blit(image, (self.x, self.y))
+
+class MiniSecondBoss:
+    def __init__(self, x, y):
+
+        # animations
+        BOSS_SIZE = (250, 250)
+
+        self.idle = load_images(
+            "BoneBoss/idle.png",
+            10,
+            BOSS_SIZE
+        )
+
+        self.walk = load_images(
+            "BoneBoss/walk.png",
+            6,
+            BOSS_SIZE
+        )
+
+        self.attack = load_images(
+            "BoneBoss/attack.png",
+            10,
+            BOSS_SIZE
+        )
+
+        self.hurt = load_images(
+            "BoneBoss/hurt.png",
+            5,
+            BOSS_SIZE
+        )
+
+        self.die = load_images(
+            "BoneBoss/death.png",
+            7,
+            BOSS_SIZE
+        )
+
+        self.bone_images = load_images(
+            "BoneBoss/bone.png",
+            3,
+            (120, 120)
+        )
+
+        # position
+        self.x = x
+        self.y = y
+
+        # animation
+        self.frame = 0
+        self.animation_count = 0
+
+        # state
+        self.state = "idle"
+        self.flip = False
+
+        # hp
+        self.hp = 60
+        self.max_hp = 60
+        self.alive = True
+        self.dead_done = False
+
+        # movement
+        self.speed = 4
+        self.speed_count = 0
+
+        # attack
+        self.attack_cooldown = 0
+        self.attack_time = 0
+        self.bone_thrown = False
+        self.bones = []
+
+        # hurt
+        self.hurt_time = 0
+
+        self.sounds = []
+        self.sounds.append(pygame.mixer.Sound("BoneBoss/Sounds/Roar.mp3"))
+        self.sounds.append(pygame.mixer.Sound("BoneBoss/Sounds/Sniff.mp3"))
+        self.sounds.append(pygame.mixer.Sound("BoneBoss/Sounds/Hurt.mp3"))
+        self.sounds[0].set_volume(0.5)
+        self.sounds[1].set_volume(0.5)
+        self.sounds[2].set_volume(1)
+
+        self.intro_roar_played = False
+        self.death_sound_played = False
+        self.step_timer = 0
+
+        self.Steps = []
+        for i in range(7):
+            self.Steps.append(pygame.mixer.Sound(f"BoneBoss/Sounds/Step{i}.mp3"))
+            self.Steps[i].set_volume(0.5)
+
+    def get_rect(self):
+        return pygame.Rect(
+            self.x + 80,
+            self.y + 75,
+            80,
+            80
+        )
+
+    def update_animation(self, speed):
+        images = self.get_current_images()
+
+        if len(images) == 0:
+            return
+
+        self.animation_count += 1
+
+        if self.animation_count >= speed:
+            self.animation_count = 0
+            self.frame += 1
+
+            if self.frame >= len(images):
+
+                if self.state == "die":
+                    self.frame = len(images) - 1
+                    self.dead_done = True
+
+                elif self.state == "attack":
+                    self.frame = len(images) - 1
+
+                else:
+                    self.frame = 0
+
+    def throw_bone(self, player, angle_offset=0):
+        player_rect = player.get_rect()
+        boss_rect = self.get_rect()
+
+        dx = player_rect.centerx - boss_rect.centerx
+        dy = player_rect.centery - boss_rect.centery
+
+        angle = math.atan2(dy, dx)
+
+        angle += angle_offset
+
+        dx = math.cos(angle)
+        dy = math.sin(angle)
+
+        bone_x = boss_rect.centerx - 60
+        bone_y = boss_rect.centery - 60
+
+        self.bones.append(
+            MiniBone(bone_x, bone_y, dx, dy, self.bone_images)
+        )
+
+    def update_bones(self, player, walls):
+        for bone in self.bones[:]:
+            alive = bone.update(player, walls)
+
+            if not alive:
+                self.bones.remove(bone)
+
+    def move_with_collision(self, move_x, move_y, walls):
+        old_x = self.x
+        old_y = self.y
+
+
+        self.x += move_x
+        boss_rect = self.get_rect()
+
+        for wall in walls:
+            if boss_rect.colliderect(wall):
+                self.x = old_x
+                break
+
+
+        self.y += move_y
+        boss_rect = self.get_rect()
+
+        for wall in walls:
+            if boss_rect.colliderect(wall):
+                self.y = old_y
+                break
+
+
+        if self.x == old_x and self.y == old_y:
+            self.x -= move_x
+            self.y -= move_y
+
+    def move(self, player, walls):
+
+        if not self.intro_roar_played:
+            self.sounds[0].play()
+
+            self.intro_roar_played = True
+
+        self.update_bones(player, walls)
+
+        if not self.alive:
+
+            if not self.death_sound_played:
+                self.sounds[0].play()
+
+                self.death_sound_played = True
+
+            self.state = "die"
+            self.update_animation(7)
+            return
+
+        if self.attack_cooldown > 0:
+            self.attack_cooldown -= 1
+
+        if self.state == "hurt":
+            self.hurt_time -= 1
+
+            if self.hurt_time <= 0:
+                self.state = "idle"
+
+            self.update_animation(5)
+            return
+
+        player_rect = player.get_rect()
+        boss_rect = self.get_rect()
+
+        dx = player_rect.centerx - boss_rect.centerx
+        dy = player_rect.centery - boss_rect.centery
+
+        distance = math.sqrt(dx * dx + dy * dy)
+
+        if dx < 0:
+            self.flip = True
+        else:
+            self.flip = False
+
+        if self.state == "attack":
+            self.attack_time -= 1
+            self.update_animation(2)
+
+            if self.attack_time <= 25 and not self.bone_thrown:
+
+                for angle in [-0.3, 0, 0.3]:
+                    self.throw_bone(player, angle)
+
+                self.bone_thrown = True
+
+            if self.attack_time <= 0:
+                self.state = "idle"
+                self.frame = 0
+                self.animation_count = 0
+
+            return
+
+        # start throwing bone
+        if distance < 550 and distance > 180 and self.attack_cooldown <= 0:
+
+            self.sounds[1].play()
+
+            self.state = "attack"
+            self.frame = 0
+            self.animation_count = 0
+
+            self.attack_time = 30
+            self.attack_cooldown = 60
+            self.bone_thrown = False
+
+            return
+
+        # follow player if too far
+        if distance > 300 and distance < 800:
+            self.state = "walk"
+
+            self.step_timer += 1
+
+            if self.step_timer >= random.randint(14, 22):
+                random.choice(self.Steps).play()
+
+                self.step_timer = 0
+
+            if distance == 0:
+                distance = 1
+
+            move_x = dx / distance * self.speed
+            move_y = dy / distance * self.speed
+
+            self.move_with_collision(move_x, move_y, walls)
+
+            self.update_animation(4)
+            return
+
+        # move away if player is too close
+        if distance < 180:
+            self.state = "walk"
+
+            self.step_timer += 1
+
+            if self.step_timer >= random.randint(14, 22):
+                random.choice(self.Steps).play()
+
+                self.step_timer = 0
+
+            if distance == 0:
+                distance = 1
+
+            move_x = -dx / distance * self.speed
+            move_y = -dy / distance * self.speed
+
+            self.move_with_collision(move_x, move_y, walls)
+
+            self.update_animation(4)
+            return
+
+        self.state = "idle"
+        self.update_animation(7)
+
+    def hit(self, damage):
+        if not self.alive:
+            return
+
+        self.hp -= damage
+
+        self.sounds[2].play()
+        self.state = "hurt"
+        self.frame = 0
+        self.animation_count = 0
+        self.hurt_time = 18
+
+        if self.hp <= 0:
+            self.hp = 0
+            self.alive = False
+            self.state = "die"
+            self.frame = 0
+            self.animation_count = 0
+
+    def draw_health_bar(self, screen):
+        if not self.alive:
+            return
+
+        bar_x = self.x + 50
+        bar_y = self.y + 55
+
+        width = 150
+        height = 12
+
+        current_width = width * (self.hp / self.max_hp)
+
         pygame.draw.rect(
             screen,
-            (255, 0, 0),
-            self.get_rect(),
-            2
+            (40, 40, 40),
+            (bar_x, bar_y, width, height)
         )
+
+        pygame.draw.rect(
+            screen,
+            (180, 30, 30),
+            (bar_x, bar_y, current_width, height)
+        )
+
+    def get_current_images(self):
+        if self.state == "idle":
+            images = self.idle
+
+        elif self.state == "walk":
+            images = self.walk
+
+        elif self.state == "attack":
+            images = self.attack
+
+        elif self.state == "hurt":
+            images = self.hurt
+
+        else:
+            images = self.die
+
+        if len(images) == 0:
+            return []
+
+        if self.frame >= len(images):
+            self.frame = 0
+
+        if self.frame < 0:
+            self.frame = 0
+
+        return images
+
+    def draw(self, screen):
+        images = self.get_current_images()
+
+        if len(images) == 0:
+            return
+
+        image = images[self.frame]
+
+        if self.flip:
+            image = pygame.transform.flip(image, True, False)
+
+        screen.blit(image, (self.x, self.y))
 
         self.draw_health_bar(screen)
 
         for bone in self.bones:
             bone.draw(screen)
 
-            pygame.draw.rect(
-                screen,
-                (0, 255, 0),
-                bone.get_rect(),
-                2
-            )
