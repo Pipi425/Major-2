@@ -252,6 +252,8 @@ def save_game(player, current_scene, game_data, save_point_id=None):
     file.write(f"npc_gift_given={game_data.get('npc_gift_given', False)}\n")
     file.write(f"npc_gift={game_data.get('npc_gift', False)}\n")
     file.write(f"Scene_Back={game_data.get('Scene_Back', False)}\n")
+    file.write(f"Scene_Back1={game_data.get('Scene_Back_1', False)}\n")
+    file.write(f"Scene_Back2={game_data.get('Scene_Back_2', False)}\n")
     file.write(f"House_Out={game_data.get('House_Out', False)}\n")
     file.write(f"MazeSolved={game_data.get('MazeSolved', False)}\n")
     file.write(f"Boss1={game_data.get('Boss1', False)}\n")
@@ -325,6 +327,8 @@ def apply_save_data(player, game_data, save_data):
     game_data["npc_gift_given"] = save_data.get("npc_gift_given", "False") == "True"
     game_data["npc_gift"] = save_data.get("npc_gift", "False") == "True"
     game_data["Scene_Back"] = save_data.get("Scene_Back", "False") == "True"
+    game_data["Scene_Back_1"] = save_data.get("Scene_Back_1", "False") == "True"
+    game_data["Scene_Back_2"] = save_data.get("Scene_Back_2", "False") == "True"
     game_data["House_Out"] = save_data.get("House_Out", "False") == "True"
     game_data["scene"] = save_data["scene"]
     game_data["MazeSolved"] = save_data.get("MazeSolved", "False") == "True"
@@ -397,6 +401,8 @@ def reset_save_data(player, game_data):
     game_data["npc_gift_given"] = False
     game_data["npc_gift"] = False
     game_data["Scene_Back"] = False
+    game_data["Scene_Back_1"] = False
+    game_data["Scene_Back_2"] = False
     game_data["House_Out"] = False
     game_data["MazeSolved"] = False
 

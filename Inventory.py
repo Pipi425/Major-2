@@ -1,12 +1,20 @@
 import pygame
-
+import copy
 
 # ================= ITEM SYSTEM =================
 class Item:
-    def __init__(self, name, image_path=None, description="", item_type="misc"):
+    def __init__(
+            self,
+            name,
+            image_path=None,
+            description="",
+            item_type="misc",
+            quantity=1
+    ):
         self.name = name
         self.description = description
         self.type = item_type
+        self.quantity = quantity
         self.sounds = [
             pygame.mixer.Sound("SoundEffects/Bite.mp3"),
             pygame.mixer.Sound("SoundEffects/Equip.mp3")
@@ -21,6 +29,10 @@ class Item:
 
     def use(self, player, inventory):
         print(f"{self.name} cannot be used.")
+
+    @property
+    def stackable(self):
+        return self.type in ["consumable", "misc"]
 
 
 class Weapon(Item):
@@ -119,10 +131,16 @@ class Consumable(Item):
 
         if player.health + self.heal >= player.max_health:
             player.health = player.max_health
-            inventory.remove_item(self)
+            self.quantity -= 1
+
+            if self.quantity <= 0:
+                inventory.remove_item(self)
         else:
             player.health += self.heal
-            inventory.remove_item(self)
+            self.quantity -= 1
+
+            if self.quantity <= 0:
+                inventory.remove_item(self)
 
 
 class Misc(Item):
@@ -141,12 +159,72 @@ class Inventory:
         self.grid = [[None for _ in range(cols)] for _ in range(rows)]
 
     def add_item(self, item):
-        for y in range(self.rows):
-            for x in range(self.cols):
-                if self.grid[y][x] is None:
-                    self.grid[y][x] = item
-                    return True
-        return False
+
+        # ===== 尝试堆叠 =====
+
+        if item.stackable:
+
+            for row in self.grid:
+                for slot in row:
+
+                    if (
+                            slot
+                            and slot.name == item.name
+                            and slot.stackable
+                            and slot.quantity < 100
+                    ):
+
+                        can_add = min(
+                            item.quantity,
+                            100 - slot.quantity
+                        )
+
+                        slot.quantity += can_add
+                        item.quantity -= can_add
+
+                        if item.quantity <= 0:
+                            return True
+
+        if not item.stackable:
+
+            for y in range(self.rows):
+                for x in range(self.cols):
+
+                    if self.grid[y][x] is None:
+                        self.grid[y][x] = item
+                        return True
+
+            return False
+
+        # ===== 放进空格 =====
+
+        while item.stackable and item.quantity > 0:
+
+            amount = min(item.quantity, 100)
+
+            new_item = copy.copy(item)
+            new_item.quantity = amount
+
+            placed = False
+
+            for y in range(self.rows):
+                for x in range(self.cols):
+
+                    if self.grid[y][x] is None:
+                        self.grid[y][x] = new_item
+
+                        item.quantity -= amount
+                        placed = True
+
+                        break
+
+                if placed:
+                    break
+
+            if not placed:
+                return False
+
+        return True
 
     def remove_item(self, item):
         for y in range(self.rows):
@@ -161,6 +239,30 @@ class Inventory:
             for x in range(self.cols):
                 self.grid[y][x] = None
 
+    def remove_quantity(self, item, amount=1):
+
+        if not item:
+            return False
+
+        if not item.stackable:
+            return self.remove_item(item)
+
+        item.quantity -= amount
+
+        if item.quantity <= 0:
+            self.remove_item(item)
+
+        return True
+
+    def first_empty_slot(self):
+
+        for y in range(self.rows):
+            for x in range(self.cols):
+
+                if self.grid[y][x] is None:
+                    return x, y
+
+        return None
 
 # ================= UI =================
 class InventoryUI:
@@ -378,6 +480,23 @@ class InventoryUI:
                     screen.blit(item.image,
                                 (slot_x + (self.slot_size - item.image.get_width()) // 2,
                                  slot_y + (self.slot_size - item.image.get_height()) // 2))
+
+                if item and item.quantity > 1:
+                    font = pygame.font.SysFont(None, 22)
+
+                    text = font.render(
+                        str(item.quantity),
+                        True,
+                        (255, 255, 255)
+                    )
+
+                    screen.blit(
+                        text,
+                        (
+                            slot_x + 42,
+                            slot_y + 42
+                        )
+                    )
 
                 if x == self.cursor_x and y == self.cursor_y:
                     pygame.draw.rect(screen, (255, 215, 0),

@@ -18,6 +18,8 @@ from SecondBoss import SecondBoss, MiniSecondBoss
 from SkeletonSoldier import SkeletonSoldier
 from SkeletonBoxer import SkeletonBoxer
 from SkeletonWizard import SkeletonWizard
+from StorageChest import StorageChest
+from StorageChestUI import StorageChestUI
 from SaveSystem import (
     save_game,
     load_game,
@@ -935,6 +937,7 @@ def second_scene(player, game_data):
                 "An apple that restore 2 health.",
                 heal=2
             )
+            apple.quantity = 5
 
             game_data["inventory"].add_item(apple)
 
@@ -1307,7 +1310,7 @@ def eldermoor_scene(player, game_data):
 
         for rect in Change_Scene_1:
             if player.get_rect().colliderect(rect):
-                pygame.mixer.music.fadeout()
+                pygame.mixer.music.fadeout(1000)
                 game_data["Scene_Back"] = True
                 pygame.mixer.stop()
                 return "second_scene"
@@ -1598,8 +1601,36 @@ def InHouse(player, game_data):
     player.can_attack = False
     player.set_position(715, 420)
 
+    open_sound = pygame.mixer.Sound(
+        "SoundEffects/OpenChest.mp3"
+    )
+
+    close_sound = pygame.mixer.Sound(
+        "SoundEffects/CloseChest.mp3"
+    )
+
+    transfer_sound = pygame.mixer.Sound(
+        "SoundEffects/Equip.mp3"
+    )
+
+    open_sound.set_volume(0.3)
+    close_sound.set_volume(0.3)
+    transfer_sound.set_volume(0.3)
+
     inventory = game_data["inventory"]
     inventory_ui = InventoryUI(inventory, player)
+
+    opened_this_frame = False
+
+    storage = StorageChest(
+        544,
+        288
+    )
+
+    storage_ui = StorageChestUI(
+        inventory,
+        storage.inventory
+    )
 
     click = pygame.mixer.Sound("Musics/Hover2.mp3")
     click.set_volume(0.2)
@@ -1729,6 +1760,18 @@ def InHouse(player, game_data):
                 if event.key == pygame.K_f and inventory_ui.open:
                     inventory_ui.handle_use(player, game_data["inventory"])
 
+                if (
+                        event.key == pygame.K_f
+                        and storage.can_interact(player)
+                        and not inventory_ui.open
+                        and not storage_ui.open
+                ):
+
+                    open_sound.play()
+
+                    storage_ui.open = True
+                    storage.ui_open = True
+
                 # ===== INVENTORY =====
                 if event.key == pygame.K_i:
                     inventory_ui.open = not inventory_ui.open
@@ -1743,6 +1786,42 @@ def InHouse(player, game_data):
                     if event.key == pygame.K_DOWN:
                         inventory_ui.move_cursor(0, 1)
 
+                if (
+                        storage_ui.open
+                        and not opened_this_frame
+                ):
+
+                    if event.key == pygame.K_TAB:
+                        storage_ui.switch_focus()
+
+                    if event.key == pygame.K_LEFT:
+                        storage_ui.move_cursor(-1, 0)
+
+                    if event.key == pygame.K_RIGHT:
+                        storage_ui.move_cursor(1, 0)
+
+                    if event.key == pygame.K_UP:
+                        storage_ui.move_cursor(0, -1)
+
+                    if event.key == pygame.K_DOWN:
+                        storage_ui.move_cursor(0, 1)
+
+                    if event.key == pygame.K_ESCAPE:
+                        close_sound.play()
+                        storage_ui.open = False
+                        storage.ui_open = False
+
+                    if event.key == pygame.K_t:
+
+                        mods = pygame.key.get_mods()
+
+                        if mods & pygame.KMOD_SHIFT:
+                            storage_ui.transfer_stack()
+                            transfer_sound.play()
+                        else:
+                            storage_ui.transfer_one()
+                            transfer_sound.play()
+
         # ================= UPDATE =================
         if not freeze_world:
             player.move(keys, walls, ice_rects)
@@ -1751,6 +1830,14 @@ def InHouse(player, game_data):
         Screen.blit(SF, (0, 0))
 
         player.draw(Screen)
+
+        storage.draw_prompt(
+            Screen,
+            player
+        )
+
+        if storage.ui_open:
+            storage_ui.draw(Screen)
 
         if inventory_ui.open:
             inventory_ui.draw(Screen)
@@ -1781,9 +1868,16 @@ def InHouse(player, game_data):
 
 def IroHome(player, game_data):
     player.can_attack = False
-    if game_data.get("Scene_Back"):
-        player.set_position(570, 384)
+    if game_data["Scene_Back"]:
+        player.set_position(-40, 300)
         game_data["Scene_Back"] = False
+    elif game_data["Scene_Back_1"]:
+        player.set_position(570, -40)
+        game_data["Scene_Back_1"] = False
+    elif game_data["Scene_Back_2"]:
+        player.set_position(1200, 300)
+        game_data["Scene_Back_2"] = False
+
     else:
         player.set_position(570, 653)
 
@@ -4039,7 +4133,7 @@ def DesertVillage(player, game_data):
         for rect in Change_Scene_1:
             if player.get_rect().colliderect(rect):
                 pygame.mixer.music.fadeout(1000)
-                game_data["Scene_Back"] = True
+                game_data["Scene_Back_2"] = True
                 return "IroHome"
 
         player.draw_health_bar(Screen)
@@ -5422,6 +5516,8 @@ game_data = {
     "npc_gift_given": False,
     "npc_gift": False,
     "Scene_Back": False,
+    "Scene_Back_1": False,
+    "Scene_Back_2": False,
     "inventory": inventory,
     "scene": menu,
     "MazeSolved": False,
