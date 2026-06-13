@@ -1,72 +1,50 @@
 import pygame
 
+
 def load_arrow_images():
-    arrow_images = {
-        "up": [],
-        "down": [],
-        "left": [],
-        "right": []
+    down = pygame.image.load(
+        "SkeletonSoldier/Arrow-NoOutline.png"
+    ).convert_alpha()
+
+    down = pygame.transform.scale(down, (18, 45))
+
+    return {
+        "down": down,
+        "up": pygame.transform.rotate(down, 180),
+        "right": pygame.transform.rotate(down, 90),
+        "left": pygame.transform.rotate(down, -90)
     }
-
-    for i in range(0, 30):
-        arrow_images["up"].append(
-            pygame.transform.scale(
-                pygame.image.load(f"Arrows/a{i}_up.png").convert_alpha(), (70, 70)
-            )
-        )
-        arrow_images["down"].append(
-            pygame.transform.scale(
-                pygame.image.load(f"Arrows/a{i}_down.png").convert_alpha(), (70, 70)
-            )
-        )
-        arrow_images["left"].append(
-            pygame.transform.scale(
-                pygame.image.load(f"Arrows/a{i}_left.png").convert_alpha(), (70, 70)
-            )
-        )
-        arrow_images["right"].append(
-            pygame.transform.scale(
-                pygame.image.load(f"Arrows/a{i}_right.png").convert_alpha(), (70, 70)
-            )
-        )
-
-    return arrow_images
 
 
 class Arrow:
     def __init__(self, x, y, direction, arrow_images):
         self.direction = direction
-        self.images = arrow_images[direction]
-        self.frame_index = 0
-        self.image = self.images[self.frame_index]
-        self.speed = 6
-        self.animation_speed = 0.3
-
+        self.image = arrow_images[direction]
+        self.speed = 10
         self.spawn_time = pygame.time.get_ticks()
+
+        # 保持玩家箭原来的位置，只向上2像素
+        self.rect = self.image.get_rect(center=(x, y - 2))
 
         if direction == "up":
             self.dx = 0
             self.dy = -self.speed
-            self.rect = self.image.get_rect(center=(x, y))
-            self.hitbox = pygame.Rect(0, 0, 16, 34)
+            self.hitbox = pygame.Rect(0, 0, 10, 32)
 
         elif direction == "down":
             self.dx = 0
             self.dy = self.speed
-            self.rect = self.image.get_rect(center=(x, y))
-            self.hitbox = pygame.Rect(0, 0, 16, 34)
+            self.hitbox = pygame.Rect(0, 0, 10, 32)
 
         elif direction == "left":
             self.dx = -self.speed
             self.dy = 0
-            self.rect = self.image.get_rect(center=(x, y))
-            self.hitbox = pygame.Rect(0, 0, 34, 16)
+            self.hitbox = pygame.Rect(0, 0, 32, 10)
 
-        elif direction == "right":
+        else:
             self.dx = self.speed
             self.dy = 0
-            self.rect = self.image.get_rect(center=(x, y))
-            self.hitbox = pygame.Rect(0, 0, 34, 16)
+            self.hitbox = pygame.Rect(0, 0, 32, 10)
 
         self.hitbox.center = self.rect.center
 
@@ -75,12 +53,6 @@ class Arrow:
         self.rect.y += self.dy
         self.hitbox.center = self.rect.center
 
-        self.frame_index += self.animation_speed
-        if self.frame_index >= len(self.images):
-            self.frame_index = 0
-
-        self.image = self.images[int(self.frame_index)]
-
         if pygame.time.get_ticks() - self.spawn_time > 1250:
             return False
 
@@ -88,15 +60,14 @@ class Arrow:
 
     def off_screen(self, width, height):
         return (
-            self.rect.right < 0 or
-            self.rect.left > width or
-            self.rect.bottom < 0 or
-            self.rect.top > height
+            self.rect.right < 0
+            or self.rect.left > width
+            or self.rect.bottom < 0
+            or self.rect.top > height
         )
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
     def hit_enemy(self, enemy_rect):
-
         return self.hitbox.colliderect(enemy_rect)

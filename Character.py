@@ -26,6 +26,28 @@ def load_images(path, size):
     return images
 
 
+def load_bow_images():
+    sheet = pygame.image.load(
+        "SkeletonSoldier/Bow-Sheet-NoOutline.png"
+    ).convert_alpha()
+
+    all_images = []
+
+    for i in range(24):
+        image = sheet.subsurface(
+            pygame.Rect(i * 40, 0, 40, 40)
+        ).copy()
+
+        image = pygame.transform.scale(image, (85, 85))
+        all_images.append(image)
+
+    return {
+        "up": all_images[0:6],
+        "down": all_images[6:12],
+        "right": all_images[12:18],
+        "left": all_images[18:24]
+    }
+
 class Player:
     def __init__(self, spawn_x, spawn_y):
         self.walk_sound = []
@@ -38,6 +60,7 @@ class Player:
         self.idle = {}
         self.run = {}
         self.attack = {}
+        self.bow_images = load_bow_images()
 
         self.attack_speed = 0
 
@@ -96,6 +119,13 @@ class Player:
         self.attack_key_down = False
         self.attack_cooldown = 0
 
+        self.bow_attacking = False
+        self.bow_direction = "down"
+        self.bow_frame = 0
+        self.bow_count = 0
+        self.bow_speed = 6
+        self.arrow_ready = False
+
         self.base_health = 12
         self.health = 12
         self.hp = self.health
@@ -142,6 +172,81 @@ class Player:
         self.Empty_heart = pygame.transform.scale(
             pygame.image.load("HealthBars/Empty_heart.png").convert_alpha(), (40, 40)
         )
+
+    def start_bow_attack(self):
+        if not self.can_attack:
+            return False
+
+        if self.bow is None:
+            return False
+
+        if self.attacking or self.bow_attacking:
+            return False
+
+        if self.bow_cooldown > 0:
+            return False
+
+        self.bow_attacking = True
+        self.moving = False
+        self.bow_direction = self.direction
+        self.bow_frame = 0
+        self.bow_count = 0
+        self.arrow_ready = False
+
+        self.bow_cooldown = self.bow.cooldown * 0.06
+        self.max_bow_cooldown = self.bow.cooldown
+
+        return True
+
+    def update_bow_attack(self):
+        if not self.bow_attacking:
+            return
+
+        self.bow_count += 1
+
+        if self.bow_count < self.bow_speed:
+            return
+
+        self.bow_count = 0
+        self.bow_frame += 1
+
+        if self.bow_frame == 5:
+            self.arrow_ready = True
+
+        if self.bow_frame >= 6:
+            self.bow_attacking = False
+            self.bow_frame = 0
+
+
+
+    def take_arrow_position(self):
+        x = self.x + 70
+        y = self.y + 80
+
+        if self.bow_direction == "up":
+            y -= 35
+
+        elif self.bow_direction == "down":
+            y += 35
+
+        elif self.bow_direction == "left":
+            x -= 35
+
+        else:
+            x += 35
+
+        return int(x), int(y)
+
+
+
+    def take_arrow_shot(self):
+        if not self.arrow_ready:
+            return None
+
+        self.arrow_ready = False
+        x, y = self.take_arrow_position()
+
+        return x, y, self.bow_direction
 
     def start_attack(self):
         self.attack_speed = max(
@@ -195,6 +300,9 @@ class Player:
     def get_image(self):
         if self.attacking:
             image = self.attack_images[self.attack_frame]
+
+        elif self.bow_attacking:
+            image = self.idle[self.bow_direction][0]
 
         elif self.moving:
             images = self.run[self.direction]
@@ -275,6 +383,11 @@ class Player:
         if self.bow_cooldown > 0:
             self.bow_cooldown -= 1
 
+        if not self.can_attack and self.bow_attacking:
+            self.bow_attacking = False
+            self.bow_frame = 0
+            self.arrow_ready = False
+
         # ===== STAMINA =====
 
         if self.exhausted:
@@ -315,6 +428,13 @@ class Player:
             elif self.stamina < self.max_stamina:
 
                 self.stamina += 1
+
+        # ===== Bow attack =====
+        if self.bow_attacking:
+            self.moving = False
+            self.update_bow_attack()
+            self.update_hit_timer()
+            return
 
         # ===== Attack =====
         if keys[pygame.K_q]:  # 如果你想继续用Q攻击
@@ -528,7 +648,25 @@ class Player:
 
         image = self.get_image()
 
-        screen.blit(image, (self.x, self.y))
+        if self.bow_attacking:
+            bow_image = self.bow_images[self.bow_direction][self.bow_frame]
+            bow_rect = bow_image.get_rect(
+                center=(self.x + 70, self.y + 76)
+            )
+
+            if self.bow_direction == "up":
+                screen.blit(bow_image, bow_rect)
+                screen.blit(image, (self.x, self.y))
+            else:
+                screen.blit(image, (self.x, self.y))
+                screen.blit(bow_image, bow_rect)
+
+            if self.bow_frame == 5:
+                shot = self.take_arrow_position()
+                pygame.draw.circle(screen, (230, 240, 255), shot, 9, 2)
+
+        else:
+            screen.blit(image, (self.x, self.y))
 
         # 蓝框：角色图片
         pygame.draw.rect(
